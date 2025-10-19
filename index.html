@@ -146,10 +146,26 @@
                 return Object.keys(newErrors).length === 0;
             };
 
-            const calcularSimulacao = () => {
+            const calcularSimulacao = async () => {
+                // Buscar tarifa do banco de dados
+                let tarifaCopel = 0.85; // Valor padrão como fallback
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=eq.tarifa_kwh`, {
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY
+                        }
+                    });
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        tarifaCopel = parseFloat(data[0].valor);
+                    }
+                } catch (error) {
+                    console.log('Usando tarifa padrão');
+                }
+
                 const consumo = parseFloat(formData.consumoKW);
                 const minimo = consumoMinimo[formData.tipoConexao];
-                const tarifaCopel = 0.85;
                 const desconto = formData.cupom ? 0.20 : 0.15;
                 const contaAtual = consumo * tarifaCopel;
                 const consumoExcedente = Math.max(consumo - minimo, 0);
@@ -271,14 +287,16 @@
                     if (!cepValido) return;
                 }
                 if (validateStep(step)) {
-                    if (step === 2) calcularSimulacao();
+                    if (step === 2) await calcularSimulacao();
                     if (step === 4) {
                         setMostrarRevisao(true);
                         return;
                     }
                     setStep(step + 1);
                 }
-            };if (mostrarRevisao) {
+            };
+
+            if (mostrarRevisao) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
                         <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-2xl">
@@ -622,7 +640,9 @@
                                     <p className="text-3xl font-bold text-blue-700">R$ {simulacao.economiaAnual}</p>
                                 </div>
                             </div>
-                        )}{step === 4 && (
+                        )}
+
+                        {step === 4 && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <button onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'fisica' }))} className={`p-6 rounded-lg border-2 ${formData.tipoPessoa === 'fisica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
