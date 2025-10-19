@@ -38,8 +38,17 @@
             const [formData, setFormData] = useState({
                 cep: '', nome: '', sobrenome: '', cupom: '', 
                 email: '', telefone: '', valorMedioConta: '',
+                // Endereço completo
+                logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
+                estado: '', cidade: '',
+                // Dados da instalação/qualificação
+                modalidadeTarifaria: '', distribuidoraEnergia: 'COPEL',
+                logradouroInstalacao: '', numeroInstalacaoEndereco: '',
+                complementoInstalacao: '', bairroInstalacao: '',
+                cidadeInstalacao: '', estadoInstalacao: '',
                 arquivoConta: null, tipoConexao: '', consumoKW: '', 
                 numeroInstalacao: '', numeroCliente: '',
+                // Documentação
                 tipoPessoa: 'fisica', cpf: '', rg: '', 
                 arquivoRGFrente: null, arquivoRGVerso: null,
                 cnpj: '', nomeFantasia: '', razaoSocial: '',
@@ -49,7 +58,13 @@
                 arquivoRGRep2Frente: null, arquivoRGRep2Verso: null,
                 copiarDadosContato: false,
                 tipoDocumentoEmpresa: 'contrato', contratoSocial: null,
-                estado: '', cidade: ''
+                // Responsável pelo pagamento
+                temResponsavelPagamento: false,
+                nomeResponsavelPagamento: '', cpfResponsavelPagamento: '',
+                rgResponsavelPagamento: '',
+                arquivoRGRespPagFrente: null, arquivoRGRespPagVerso: null,
+                // Aceites
+                aceiteTermoAdesao: false, aceiteDadosPessoais: false
             });
             const [errors, setErrors] = useState({});
             const [simulacao, setSimulacao] = useState(null);
@@ -89,7 +104,14 @@
                         return false;
                     }
                     
-                    setFormData(prev => ({ ...prev, estado: data.uf, cidade: data.localidade }));
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        estado: data.uf, 
+                        cidade: data.localidade,
+                        logradouro: data.logradouro || '',
+                        bairro: data.bairro || '',
+                        complemento: data.complemento || ''
+                    }));
                     
                     if (data.uf !== 'PR') {
                         setEstadoForaCobertura(true);
@@ -115,6 +137,13 @@
                     if (!formData.telefone) newErrors.telefone = 'Telefone é obrigatório';
                 }
                 if (currentStep === 2) {
+                    if (!formData.logradouro) newErrors.logradouro = 'Logradouro é obrigatório';
+                    if (!formData.numeroEndereco) newErrors.numeroEndereco = 'Número é obrigatório';
+                    if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório';
+                }
+                if (currentStep === 3) {
+                    if (!formData.modalidadeTarifaria) newErrors.modalidadeTarifaria = 'Modalidade tarifária é obrigatória';
+                    if (!formData.distribuidoraEnergia) newErrors.distribuidoraEnergia = 'Distribuidora é obrigatória';
                     if (!formData.tipoConexao) newErrors.tipoConexao = 'Selecione o tipo de conexão';
                     if (!formData.consumoKW) newErrors.consumoKW = 'Consumo é obrigatório';
                     const minimo = consumoMinimo[formData.tipoConexao];
@@ -124,7 +153,7 @@
                     if (!formData.numeroInstalacao) newErrors.numeroInstalacao = 'Número da instalação é obrigatório';
                     if (!formData.arquivoConta) newErrors.arquivoConta = 'Conta de energia é obrigatória';
                 }
-                if (currentStep === 4) {
+                if (currentStep === 5) {
                     if (formData.tipoPessoa === 'fisica') {
                         if (!formData.cpf) newErrors.cpf = 'CPF é obrigatório';
                         if (!formData.rg) newErrors.rg = 'RG é obrigatório';
@@ -141,14 +170,22 @@
                         if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'RG/CPF verso do Representante é obrigatório';
                         if (!formData.contratoSocial) newErrors.contratoSocial = 'Documento da empresa é obrigatório';
                     }
+                    if (formData.temResponsavelPagamento) {
+                        if (!formData.nomeResponsavelPagamento) newErrors.nomeResponsavelPagamento = 'Nome do responsável é obrigatório';
+                        if (!formData.cpfResponsavelPagamento) newErrors.cpfResponsavelPagamento = 'CPF do responsável é obrigatório';
+                        if (!formData.rgResponsavelPagamento) newErrors.rgResponsavelPagamento = 'RG do responsável é obrigatório';
+                        if (!formData.arquivoRGRespPagFrente) newErrors.arquivoRGRespPagFrente = 'RG frente é obrigatório';
+                        if (!formData.arquivoRGRespPagVerso) newErrors.arquivoRGRespPagVerso = 'RG verso é obrigatório';
+                    }
+                    if (!formData.aceiteTermoAdesao) newErrors.aceiteTermoAdesao = 'Aceite obrigatório';
+                    if (!formData.aceiteDadosPessoais) newErrors.aceiteDadosPessoais = 'Aceite obrigatório';
                 }
                 setErrors(newErrors);
                 return Object.keys(newErrors).length === 0;
             };
 
             const calcularSimulacao = async () => {
-                // Buscar tarifa do banco de dados
-                let tarifaCopel = 0.85; // Valor padrão como fallback
+                let tarifaCopel = 0.85;
                 try {
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=eq.tarifa_kwh`, {
                         headers: {
@@ -215,6 +252,8 @@
                     const urlRGRep1Verso = await uploadArquivo(formData.arquivoRGRep1Verso);
                     const urlRGRep2Frente = await uploadArquivo(formData.arquivoRGRep2Frente);
                     const urlRGRep2Verso = await uploadArquivo(formData.arquivoRGRep2Verso);
+                    const urlRGRespPagFrente = await uploadArquivo(formData.arquivoRGRespPagFrente);
+                    const urlRGRespPagVerso = await uploadArquivo(formData.arquivoRGRespPagVerso);
                     
                     const propostaData = {
                         nome: formData.nome,
@@ -222,7 +261,19 @@
                         cep: formData.cep,
                         estado: formData.estado,
                         cidade: formData.cidade,
+                        logradouro: formData.logradouro,
+                        numero_endereco: formData.numeroEndereco,
+                        complemento: formData.complemento || null,
+                        bairro: formData.bairro,
                         cupom: formData.cupom || null,
+                        modalidade_tarifaria: formData.modalidadeTarifaria,
+                        distribuidora_energia: formData.distribuidoraEnergia,
+                        logradouro_instalacao: formData.logradouroInstalacao || null,
+                        numero_instalacao_endereco: formData.numeroInstalacaoEndereco || null,
+                        complemento_instalacao: formData.complementoInstalacao || null,
+                        bairro_instalacao: formData.bairroInstalacao || null,
+                        cidade_instalacao: formData.cidadeInstalacao || null,
+                        estado_instalacao: formData.estadoInstalacao || null,
                         tipo_conexao: formData.tipoConexao,
                         consumo_kw: parseInt(formData.consumoKW),
                         numero_instalacao: formData.numeroInstalacao,
@@ -249,6 +300,14 @@
                         url_rg_rep_1_verso: urlRGRep1Verso,
                         url_rg_rep_2_frente: urlRGRep2Frente,
                         url_rg_rep_2_verso: urlRGRep2Verso,
+                        tem_responsavel_pagamento: formData.temResponsavelPagamento,
+                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento || null,
+                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento || null,
+                        rg_responsavel_pagamento: formData.rgResponsavelPagamento || null,
+                        url_rg_resp_pag_frente: urlRGRespPagFrente,
+                        url_rg_resp_pag_verso: urlRGRespPagVerso,
+                        aceite_termo_adesao: formData.aceiteTermoAdesao,
+                        aceite_dados_pessoais: formData.aceiteDadosPessoais,
                         economia_mensal: parseFloat(simulacao.economiaMensal),
                         economia_anual: parseFloat(simulacao.economiaAnual),
                         desconto: parseInt(simulacao.desconto),
@@ -287,8 +346,8 @@
                     if (!cepValido) return;
                 }
                 if (validateStep(step)) {
-                    if (step === 2) await calcularSimulacao();
-                    if (step === 4) {
+                    if (step === 3) await calcularSimulacao();
+                    if (step === 5) {
                         setMostrarRevisao(true);
                         return;
                     }
@@ -316,6 +375,16 @@
                                         <p><strong>Email:</strong> {formData.email}</p>
                                         <p><strong>Telefone:</strong> {formData.telefone}</p>
                                         <p><strong>CEP:</strong> {formData.cep}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-indigo-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Endereço</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Logradouro:</strong> {formData.logradouro}</p>
+                                        <p><strong>Número:</strong> {formData.numeroEndereco}</p>
+                                        <p><strong>Complemento:</strong> {formData.complemento || 'N/A'}</p>
+                                        <p><strong>Bairro:</strong> {formData.bairro}</p>
                                         <p><strong>Cidade:</strong> {formData.cidade} - {formData.estado}</p>
                                     </div>
                                 </div>
@@ -323,6 +392,8 @@
                                 <div className="bg-green-50 p-4 rounded-lg">
                                     <h3 className="font-bold mb-3">Dados da Instalação</h3>
                                     <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Modalidade:</strong> {formData.modalidadeTarifaria}</p>
+                                        <p><strong>Distribuidora:</strong> {formData.distribuidoraEnergia}</p>
                                         <p><strong>Tipo:</strong> {formData.tipoConexao}</p>
                                         <p><strong>Consumo:</strong> {formData.consumoKW} kW</p>
                                         <p><strong>Nº Instalação:</strong> {formData.numeroInstalacao}</p>
@@ -356,12 +427,18 @@
                                             <p><strong>CNPJ:</strong> {formData.cnpj}</p>
                                             <p><strong>Nome Fantasia:</strong> {formData.nomeFantasia}</p>
                                             <p><strong>Razão Social:</strong> {formData.razaoSocial}</p>
-                                            <p><strong>Representante 1:</strong> {formData.representanteLegal1} - CPF: {formData.cpfRepresentante1}</p>
-                                            {formData.arquivoRGRep1Frente && <p><strong>Doc Rep. 1 Frente:</strong> {formData.arquivoRGRep1Frente.name}</p>}
-                                            {formData.arquivoRGRep1Verso && <p><strong>Doc Rep. 1 Verso:</strong> {formData.arquivoRGRep1Verso.name}</p>}
-                                            {formData.representanteLegal2 && <p><strong>Representante 2:</strong> {formData.representanteLegal2} - CPF: {formData.cpfRepresentante2}</p>}
-                                            {formData.arquivoRGRep2Frente && <p><strong>Doc Rep. 2 Frente:</strong> {formData.arquivoRGRep2Frente.name}</p>}
-                                            {formData.arquivoRGRep2Verso && <p><strong>Doc Rep. 2 Verso:</strong> {formData.arquivoRGRep2Verso.name}</p>}
+                                            <p><strong>Representante 1:</strong> {formData.representanteLegal1}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {formData.temResponsavelPagamento && (
+                                    <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+                                        <h3 className="font-bold mb-3">Responsável pelo Pagamento</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <p><strong>Nome:</strong> {formData.nomeResponsavelPagamento}</p>
+                                            <p><strong>CPF:</strong> {formData.cpfResponsavelPagamento}</p>
+                                            <p><strong>RG:</strong> {formData.rgResponsavelPagamento}</p>
                                         </div>
                                     </div>
                                 )}
@@ -419,8 +496,8 @@
                                             <p className="font-bold">{formData.email}</p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-600">Telefone</p>
-                                            <p className="font-bold">{formData.telefone}</p>
+                                            <p className="text-gray-600">Endereço</p>
+                                            <p className="font-bold">{formData.logradouro}, {formData.numeroEndereco}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Localização</p>
@@ -499,7 +576,7 @@
                             
                             <div className="mt-8 flex gap-4 justify-center no-print">
                                 <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
-                                    📄 Imprimir Proposta
+                                    🖨️ Imprimir Proposta
                                 </button>
                                 <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">
                                     ➕ Nova Proposta
@@ -526,10 +603,10 @@
                         </div>
 
                         <div className="flex justify-between items-center mb-8">
-                            {[1, 2, 3, 4].map((s) => (
+                            {[1, 2, 3, 4, 5].map((s) => (
                                 <div key={s} className="flex items-center flex-1">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${s <= step ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'}`}>{s}</div>
-                                    {s < 4 && <div className={`flex-1 h-1 mx-2 ${s < step ? 'bg-blue-600' : 'bg-gray-300'}`} />}
+                                    {s < 5 && <div className={`flex-1 h-1 mx-2 ${s < step ? 'bg-blue-600' : 'bg-gray-300'}`} />}
                                 </div>
                             ))}
                         </div>
@@ -570,7 +647,7 @@
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Telefone *</label>
-                                    <input type="tel" name="telefone" value={formData.telefone} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.telefone ? 'border-red-500' : 'border-gray-300'}`} />
+                                    <input type="tel" name="telefone" value={formData.telefone} onChange={handleInputChange} placeholder="(00) 00000-0000" className={`w-full p-3 border rounded-lg ${errors.telefone ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.telefone && <p className="text-red-500 text-sm mt-1">{errors.telefone}</p>}
                                 </div>
                                 <div>
@@ -583,6 +660,64 @@
 
                         {step === 2 && (
                             <div className="space-y-6">
+                                <div className="bg-indigo-50 p-4 rounded-lg mb-4">
+                                    <p className="text-sm text-indigo-800">📍 Endereço do Cliente</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Logradouro (Rua/Avenida) *</label>
+                                    <input type="text" name="logradouro" value={formData.logradouro} onChange={handleInputChange} placeholder="Ex: Rua das Flores" className={`w-full p-3 border rounded-lg ${errors.logradouro ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.logradouro && <p className="text-red-500 text-sm mt-1">{errors.logradouro}</p>}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Número *</label>
+                                        <input type="text" name="numeroEndereco" value={formData.numeroEndereco} onChange={handleInputChange} placeholder="123" className={`w-full p-3 border rounded-lg ${errors.numeroEndereco ? 'border-red-500' : 'border-gray-300'}`} />
+                                        {errors.numeroEndereco && <p className="text-red-500 text-sm mt-1">{errors.numeroEndereco}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Complemento</label>
+                                        <input type="text" name="complemento" value={formData.complemento} onChange={handleInputChange} placeholder="Apto 101" className="w-full p-3 border rounded-lg border-gray-300" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Bairro *</label>
+                                    <input type="text" name="bairro" value={formData.bairro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.bairro ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.bairro && <p className="text-red-500 text-sm mt-1">{errors.bairro}</p>}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Cidade</label>
+                                        <input type="text" name="cidade" value={formData.cidade} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Estado</label>
+                                        <input type="text" name="estado" value={formData.estado} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="space-y-6">
+                                <div className="bg-green-50 p-4 rounded-lg mb-4">
+                                    <p className="text-sm text-green-800">⚡ Qualificação da Instalação</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Modalidade Tarifária *</label>
+                                    <select name="modalidadeTarifaria" value={formData.modalidadeTarifaria} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.modalidadeTarifaria ? 'border-red-500' : 'border-gray-300'}`}>
+                                        <option value="">Selecione...</option>
+                                        <option value="Convencional">Convencional</option>
+                                        <option value="Branca">Branca</option>
+                                        <option value="Azul">Azul</option>
+                                        <option value="Verde">Verde</option>
+                                    </select>
+                                    {errors.modalidadeTarifaria && <p className="text-red-500 text-sm mt-1">{errors.modalidadeTarifaria}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Distribuidora de Energia *</label>
+                                    <input type="text" name="distribuidoraEnergia" value={formData.distribuidoraEnergia} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.distribuidoraEnergia ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.distribuidoraEnergia && <p className="text-red-500 text-sm mt-1">{errors.distribuidoraEnergia}</p>}
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Tipo de Conexão *</label>
                                     <div className="grid grid-cols-3 gap-4">
@@ -610,7 +745,7 @@
                                     <input type="text" name="numeroCliente" value={formData.numeroCliente} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Conta de Energia *</label>
+                                    <label className="block text-sm font-medium mb-2">Conta de Energia (PDF ou Imagem) *</label>
                                     <input type="file" name="arquivoConta" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoConta ? 'border-red-500' : 'border-gray-300'}`} />
                                     {formData.arquivoConta && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoConta.name}</p>}
                                     {errors.arquivoConta && <p className="text-red-500 text-sm mt-1">{errors.arquivoConta}</p>}
@@ -618,7 +753,7 @@
                             </div>
                         )}
 
-                        {step === 3 && simulacao && (
+                        {step === 4 && simulacao && (
                             <div className="space-y-6">
                                 <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center">
                                     <h3 className="text-2xl font-bold mb-2">Sua Economia Mensal</h3>
@@ -642,9 +777,9 @@
                             </div>
                         )}
 
-                        {step === 4 && (
+                        {step === 5 && (
                             <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4 mb-6">
                                     <button onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'fisica' }))} className={`p-6 rounded-lg border-2 ${formData.tipoPessoa === 'fisica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
                                         Pessoa Física
                                     </button>
@@ -700,12 +835,6 @@
                                             <h3 className="font-bold mb-4">Representante Legal 1 *</h3>
                                             <div className="space-y-4">
                                                 <div>
-                                                    <label className="flex items-center mb-2">
-                                                        <input type="checkbox" name="copiarDadosContato" checked={formData.copiarDadosContato} onChange={handleInputChange} className="mr-2" />
-                                                        <span className="text-sm">Usar dados do contato</span>
-                                                    </label>
-                                                </div>
-                                                <div>
                                                     <label className="block text-sm font-medium mb-2">Nome Completo *</label>
                                                     <input type="text" name="representanteLegal1" value={formData.representanteLegal1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.representanteLegal1 ? 'border-red-500' : 'border-gray-300'}`} />
                                                     {errors.representanteLegal1 && <p className="text-red-500 text-sm mt-1">{errors.representanteLegal1}</p>}
@@ -722,46 +851,19 @@
                                                         {errors.rgRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.rgRepresentante1}</p>}
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG/CPF Frente *</label>
-                                                    <input type="file" name="arquivoRGRep1Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Frente ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {formData.arquivoRGRep1Frente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Frente.name}</p>}
-                                                    {errors.arquivoRGRep1Frente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Frente}</p>}
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG/CPF Verso *</label>
-                                                    <input type="file" name="arquivoRGRep1Verso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Verso ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {formData.arquivoRGRep1Verso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Verso.name}</p>}
-                                                    {errors.arquivoRGRep1Verso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Verso}</p>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="border-t pt-4">
-                                            <h3 className="font-bold mb-4">Representante Legal 2 (opcional)</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">Nome Completo</label>
-                                                    <input type="text" name="representanteLegal2" value={formData.representanteLegal2} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
-                                                </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium mb-2">CPF</label>
-                                                        <input type="text" name="cpfRepresentante2" value={formData.cpfRepresentante2} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                                        <label className="block text-sm font-medium mb-2">RG/CPF Frente *</label>
+                                                        <input type="file" name="arquivoRGRep1Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Frente ? 'border-red-500' : 'border-gray-300'}`} />
+                                                        {formData.arquivoRGRep1Frente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Frente.name}</p>}
+                                                        {errors.arquivoRGRep1Frente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Frente}</p>}
                                                     </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium mb-2">RG</label>
-                                                        <input type="text" name="rgRepresentante2" value={formData.rgRepresentante2} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                                        <label className="block text-sm font-medium mb-2">RG/CPF Verso *</label>
+                                                        <input type="file" name="arquivoRGRep1Verso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Verso ? 'border-red-500' : 'border-gray-300'}`} />
+                                                        {formData.arquivoRGRep1Verso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Verso.name}</p>}
+                                                        {errors.arquivoRGRep1Verso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Verso}</p>}
                                                     </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG/CPF Frente</label>
-                                                    <input type="file" name="arquivoRGRep2Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className="w-full p-3 border rounded-lg border-gray-300" />
-                                                    {formData.arquivoRGRep2Frente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep2Frente.name}</p>}
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG/CPF Verso</label>
-                                                    <input type="file" name="arquivoRGRep2Verso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className="w-full p-3 border rounded-lg border-gray-300" />
-                                                    {formData.arquivoRGRep2Verso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep2Verso.name}</p>}
                                                 </div>
                                             </div>
                                         </div>
@@ -773,6 +875,69 @@
                                         </div>
                                     </>
                                 )}
+
+                                <div className="border-t pt-6 mt-6">
+                                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-400 mb-4">
+                                        <label className="flex items-center cursor-pointer">
+                                            <input type="checkbox" name="temResponsavelPagamento" checked={formData.temResponsavelPagamento} onChange={handleInputChange} className="mr-3 w-5 h-5" />
+                                            <span className="text-sm font-medium">Adicionar Responsável pelo Pagamento Futuro</span>
+                                        </label>
+                                    </div>
+
+                                    {formData.temResponsavelPagamento && (
+                                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                            <h3 className="font-bold text-lg mb-4">Dados do Responsável pelo Pagamento</h3>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Nome Completo *</label>
+                                                <input type="text" name="nomeResponsavelPagamento" value={formData.nomeResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nomeResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
+                                                {errors.nomeResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.nomeResponsavelPagamento}</p>}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">CPF *</label>
+                                                    <input type="text" name="cpfResponsavelPagamento" value={formData.cpfResponsavelPagamento} onChange={handleInputChange} placeholder="000.000.000-00" className={`w-full p-3 border rounded-lg ${errors.cpfResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {errors.cpfResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.cpfResponsavelPagamento}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG *</label>
+                                                    <input type="text" name="rgResponsavelPagamento" value={formData.rgResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {errors.rgResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.rgResponsavelPagamento}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG/CNH Frente *</label>
+                                                    <input type="file" name="arquivoRGRespPagFrente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRespPagFrente ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {formData.arquivoRGRespPagFrente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRespPagFrente.name}</p>}
+                                                    {errors.arquivoRGRespPagFrente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRespPagFrente}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG/CNH Verso *</label>
+                                                    <input type="file" name="arquivoRGRespPagVerso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRespPagVerso ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {formData.arquivoRGRespPagVerso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRespPagVerso.name}</p>}
+                                                    {errors.arquivoRGRespPagVerso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRespPagVerso}</p>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="border-t pt-6 mt-6 space-y-3">
+                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                        <label className="flex items-start cursor-pointer">
+                                            <input type="checkbox" name="aceiteTermoAdesao" checked={formData.aceiteTermoAdesao} onChange={handleInputChange} className="mr-3 mt-1 w-5 h-5" />
+                                            <span className="text-sm">Estou ciente que serei o responsável pela assinatura do termo de adesão e do registro/assinatura do(a) representante legal da contraprestadora *</span>
+                                        </label>
+                                        {errors.aceiteTermoAdesao && <p className="text-red-500 text-sm mt-1">{errors.aceiteTermoAdesao}</p>}
+                                    </div>
+                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                        <label className="flex items-start cursor-pointer">
+                                            <input type="checkbox" name="aceiteDadosPessoais" checked={formData.aceiteDadosPessoais} onChange={handleInputChange} className="mr-3 mt-1 w-5 h-5" />
+                                            <span className="text-sm">Autorizo o Tratamento de Dados Pessoais (conforme indicativo de acordo com a LGPD) *</span>
+                                        </label>
+                                        {errors.aceiteDadosPessoais && <p className="text-red-500 text-sm mt-1">{errors.aceiteDadosPessoais}</p>}
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -783,7 +948,7 @@
                                 </button>
                             )}
                             <div className="flex-1"></div>
-                            {step < 4 ? (
+                            {step < 5 ? (
                                 <button onClick={handleNext} className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                     Prosseguir
                                 </button>
