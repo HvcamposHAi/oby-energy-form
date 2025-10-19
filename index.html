@@ -10,15 +10,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            .no-print { display: none !important; }
-            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .no-print {
+                display: none !important;
+            }
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
         }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
     <script type="text/babel">
         const { useState } = React;
+
         const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
 
@@ -29,15 +36,19 @@
             const [mostrarRevisao, setMostrarRevisao] = useState(false);
             const [propostaId, setPropostaId] = useState(null);
             const [formData, setFormData] = useState({
-                cep: '', nome: '', sobrenome: '', cupom: '', email: '', telefone: '', valorMedioConta: '',
-                arquivoConta: null, tipoConexao: '', consumoKW: '', numeroInstalacao: '', numeroCliente: '',
-                tipoPessoa: 'fisica', cpf: '', rg: '', arquivoRGFrente: null, arquivoRGVerso: null,
+                cep: '', nome: '', sobrenome: '', cupom: '', 
+                email: '', telefone: '', valorMedioConta: '',
+                arquivoConta: null, tipoConexao: '', consumoKW: '', 
+                numeroInstalacao: '', numeroCliente: '',
+                tipoPessoa: 'fisica', cpf: '', rg: '', 
+                arquivoRGFrente: null, arquivoRGVerso: null,
                 cnpj: '', nomeFantasia: '', razaoSocial: '',
                 representanteLegal1: '', cpfRepresentante1: '', rgRepresentante1: '', 
                 arquivoRGRep1Frente: null, arquivoRGRep1Verso: null,
                 representanteLegal2: '', cpfRepresentante2: '', rgRepresentante2: '', 
                 arquivoRGRep2Frente: null, arquivoRGRep2Verso: null,
-                copiarDadosContato: false, tipoDocumentoEmpresa: 'contrato', contratoSocial: null,
+                copiarDadosContato: false,
+                tipoDocumentoEmpresa: 'contrato', contratoSocial: null,
                 estado: '', cidade: ''
             });
             const [errors, setErrors] = useState({});
@@ -67,20 +78,25 @@
                     setErrors(prev => ({ ...prev, cep: 'CEP inválido' }));
                     return false;
                 }
+                
                 try {
                     const cepLimpo = formData.cep.replace('-', '');
                     const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
                     const data = await response.json();
+                    
                     if (data.erro) {
                         setErrors(prev => ({ ...prev, cep: 'CEP não encontrado' }));
                         return false;
                     }
+                    
                     setFormData(prev => ({ ...prev, estado: data.uf, cidade: data.localidade }));
+                    
                     if (data.uf !== 'PR') {
                         setEstadoForaCobertura(true);
                     } else {
                         setEstadoForaCobertura(false);
                     }
+                    
                     setCepValidado(true);
                     return true;
                 } catch (error) {
@@ -141,6 +157,7 @@
                 const contaNova = contaAtual - economiaDesconto;
                 const economiaMensal = economiaDesconto;
                 const economiaAnual = economiaMensal * 12;
+
                 setSimulacao({
                     contaAtual: contaAtual.toFixed(2),
                     contaNova: contaNova.toFixed(2),
@@ -182,13 +199,23 @@
                     const urlRGRep1Verso = await uploadArquivo(formData.arquivoRGRep1Verso);
                     const urlRGRep2Frente = await uploadArquivo(formData.arquivoRGRep2Frente);
                     const urlRGRep2Verso = await uploadArquivo(formData.arquivoRGRep2Verso);
+                    
                     const propostaData = {
-                        nome: formData.nome, sobrenome: formData.sobrenome, cep: formData.cep,
-                        estado: formData.estado, cidade: formData.cidade, cupom: formData.cupom || null,
-                        tipo_conexao: formData.tipoConexao, consumo_kw: parseInt(formData.consumoKW),
-                        numero_instalacao: formData.numeroInstalacao, numero_cliente: formData.numeroCliente || null,
-                        tipo_pessoa: formData.tipoPessoa, cpf: formData.cpf || null, rg: formData.rg || null,
-                        cnpj: formData.cnpj || null, nome_fantasia: formData.nomeFantasia || null,
+                        nome: formData.nome,
+                        sobrenome: formData.sobrenome,
+                        cep: formData.cep,
+                        estado: formData.estado,
+                        cidade: formData.cidade,
+                        cupom: formData.cupom || null,
+                        tipo_conexao: formData.tipoConexao,
+                        consumo_kw: parseInt(formData.consumoKW),
+                        numero_instalacao: formData.numeroInstalacao,
+                        numero_cliente: formData.numeroCliente || null,
+                        tipo_pessoa: formData.tipoPessoa,
+                        cpf: formData.cpf || null,
+                        rg: formData.rg || null,
+                        cnpj: formData.cnpj || null,
+                        nome_fantasia: formData.nomeFantasia || null,
                         razao_social: formData.razaoSocial || null,
                         representante_legal_1: formData.representanteLegal1 || null,
                         cpf_representante_1: formData.cpfRepresentante1 || null,
@@ -196,16 +223,22 @@
                         representante_legal_2: formData.representanteLegal2 || null,
                         cpf_representante_2: formData.cpfRepresentante2 || null,
                         rg_representante_2: formData.rgRepresentante2 || null,
-                        email: formData.email, telefone: formData.telefone,
-                        url_conta_energia: urlContaEnergia, url_rg_frente: urlRGFrente, url_rg_verso: urlRGVerso,
+                        email: formData.email,
+                        telefone: formData.telefone,
+                        url_conta_energia: urlContaEnergia,
+                        url_rg_frente: urlRGFrente,
+                        url_rg_verso: urlRGVerso,
                         url_contrato_social: urlContratoSocial,
-                        url_rg_rep_1_frente: urlRGRep1Frente, url_rg_rep_1_verso: urlRGRep1Verso,
-                        url_rg_rep_2_frente: urlRGRep2Frente, url_rg_rep_2_verso: urlRGRep2Verso,
+                        url_rg_rep_1_frente: urlRGRep1Frente,
+                        url_rg_rep_1_verso: urlRGRep1Verso,
+                        url_rg_rep_2_frente: urlRGRep2Frente,
+                        url_rg_rep_2_verso: urlRGRep2Verso,
                         economia_mensal: parseFloat(simulacao.economiaMensal),
                         economia_anual: parseFloat(simulacao.economiaAnual),
                         desconto: parseInt(simulacao.desconto),
                         status: estadoForaCobertura ? 'lista_espera' : 'pendente'
                     };
+                    
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
                         method: 'POST',
                         headers: {
@@ -216,6 +249,7 @@
                         },
                         body: JSON.stringify(propostaData)
                     });
+                    
                     if (!response.ok) throw new Error('Erro ao salvar');
                     const data = await response.json();
                     if (data && data.length > 0) {
@@ -224,7 +258,7 @@
                         setMostrarMinuta(true);
                     }
                 } catch (error) {
-                    console.error('Erro:', error);
+                    console.error('Erro detalhado:', error);
                     alert('Erro ao salvar proposta. Tente novamente.');
                 } finally {
                     setLoading(false);
@@ -244,14 +278,104 @@
                     }
                     setStep(step + 1);
                 }
-            };
-
-            if (mostrarMinuta) {
+            };if (mostrarRevisao) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
                         <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-2xl">
                             <div className="text-center mb-8">
-                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto mx-auto mb-4" />
+                                <div className="flex justify-center mb-6">
+                                    <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto" />
+                                </div>
+                                <h2 className="text-2xl font-bold">Revisão dos Dados</h2>
+                                <p className="text-sm text-gray-600 mt-2">Confirme todas as informações antes de finalizar</p>
+                            </div>
+                            
+                            <div className="space-y-6">
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Dados Pessoais</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Nome:</strong> {formData.nome} {formData.sobrenome}</p>
+                                        <p><strong>Email:</strong> {formData.email}</p>
+                                        <p><strong>Telefone:</strong> {formData.telefone}</p>
+                                        <p><strong>CEP:</strong> {formData.cep}</p>
+                                        <p><strong>Cidade:</strong> {formData.cidade} - {formData.estado}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-green-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Dados da Instalação</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Tipo:</strong> {formData.tipoConexao}</p>
+                                        <p><strong>Consumo:</strong> {formData.consumoKW} kW</p>
+                                        <p><strong>Nº Instalação:</strong> {formData.numeroInstalacao}</p>
+                                        {formData.numeroCliente && <p><strong>Nº Cliente:</strong> {formData.numeroCliente}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="bg-purple-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Economia Estimada</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Economia Mensal:</strong> R$ {simulacao.economiaMensal}</p>
+                                        <p><strong>Economia Anual:</strong> R$ {simulacao.economiaAnual}</p>
+                                        <p><strong>Desconto:</strong> {simulacao.desconto}%</p>
+                                    </div>
+                                </div>
+
+                                {formData.tipoPessoa === 'fisica' ? (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <h3 className="font-bold mb-3">Documentos - Pessoa Física</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <p><strong>CPF:</strong> {formData.cpf}</p>
+                                            <p><strong>RG:</strong> {formData.rg}</p>
+                                            <p><strong>RG/CNH Frente:</strong> {formData.arquivoRGFrente?.name}</p>
+                                            <p><strong>RG/CNH Verso:</strong> {formData.arquivoRGVerso?.name}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <h3 className="font-bold mb-3">Documentos - Pessoa Jurídica</h3>
+                                        <div className="space-y-2 text-sm">
+                                            <p><strong>CNPJ:</strong> {formData.cnpj}</p>
+                                            <p><strong>Nome Fantasia:</strong> {formData.nomeFantasia}</p>
+                                            <p><strong>Razão Social:</strong> {formData.razaoSocial}</p>
+                                            <p><strong>Representante 1:</strong> {formData.representanteLegal1} - CPF: {formData.cpfRepresentante1}</p>
+                                            {formData.arquivoRGRep1Frente && <p><strong>Doc Rep. 1 Frente:</strong> {formData.arquivoRGRep1Frente.name}</p>}
+                                            {formData.arquivoRGRep1Verso && <p><strong>Doc Rep. 1 Verso:</strong> {formData.arquivoRGRep1Verso.name}</p>}
+                                            {formData.representanteLegal2 && <p><strong>Representante 2:</strong> {formData.representanteLegal2} - CPF: {formData.cpfRepresentante2}</p>}
+                                            {formData.arquivoRGRep2Frente && <p><strong>Doc Rep. 2 Frente:</strong> {formData.arquivoRGRep2Frente.name}</p>}
+                                            {formData.arquivoRGRep2Verso && <p><strong>Doc Rep. 2 Verso:</strong> {formData.arquivoRGRep2Verso.name}</p>}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-8 flex gap-4 justify-center">
+                                <button onClick={() => setMostrarRevisao(false)} className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300">
+                                    Voltar e Editar
+                                </button>
+                                <button onClick={salvarProposta} disabled={loading} className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
+                                    {loading ? 'Salvando...' : 'Confirmar e Contratar'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (mostrarMinuta) {
+                const dataAtual = new Date().toLocaleDateString('pt-BR');
+                const desconto = formData.cupom ? '20%' : '15%';
+                const nomeCompleto = formData.tipoPessoa === 'fisica' 
+                    ? `${formData.nome} ${formData.sobrenome}`.toUpperCase()
+                    : formData.nomeFantasia.toUpperCase();
+                
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
+                        <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-2xl">
+                            <div className="text-center mb-8">
+                                <div className="flex justify-center mb-4">
+                                    <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto" />
+                                </div>
                                 <div className="mb-4">
                                     <div className="inline-block p-4 bg-green-100 rounded-full">
                                         <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,9 +385,112 @@
                                 </div>
                                 <h2 className="text-3xl font-bold text-green-600 mb-2">Dados Enviados com Sucesso!</h2>
                                 <p className="text-lg text-gray-700">Aguarde que nossos especialistas entrarão em contato</p>
+                                <p className="text-sm text-gray-500 mt-2">Proposta ID: {propostaId}</p>
                             </div>
-                            <div className="mt-8 flex gap-4 justify-center">
-                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg">Nova Proposta</button>
+
+                            <div className="bg-blue-50 p-6 rounded-lg mb-6">
+                                <h3 className="font-bold text-lg mb-4 text-center">Resumo da sua Proposta</h3>
+                                <div className="space-y-3 text-sm">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-gray-600">Contratante</p>
+                                            <p className="font-bold">{nomeCompleto}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Email</p>
+                                            <p className="font-bold">{formData.email}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Telefone</p>
+                                            <p className="font-bold">{formData.telefone}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Localização</p>
+                                            <p className="font-bold">{formData.cidade} - {formData.estado}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Tipo de Conexão</p>
+                                            <p className="font-bold">{formData.tipoConexao}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Consumo Mensal</p>
+                                            <p className="font-bold">{formData.consumoKW} kW</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-6 rounded-lg mb-6">
+                                <h3 className="font-bold text-lg mb-3 text-center">Sua Economia Estimada</h3>
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <p className="text-sm opacity-90">Economia Mensal</p>
+                                        <p className="text-2xl font-bold">R$ {simulacao.economiaMensal}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm opacity-90">Economia Anual</p>
+                                        <p className="text-2xl font-bold">R$ {simulacao.economiaAnual}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm opacity-90">Desconto</p>
+                                        <p className="text-2xl font-bold">{desconto}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {estadoForaCobertura ? (
+                                <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400 mb-6">
+                                    <p className="text-sm font-semibold text-center text-yellow-800">
+                                        ⏳ Você foi adicionado à lista de espera
+                                    </p>
+                                    <p className="text-xs text-center text-yellow-700 mt-2">
+                                        Atualmente atendemos apenas o Paraná. Entraremos em contato quando houver disponibilidade em {formData.estado}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-400 mb-6">
+                                    <p className="text-sm font-semibold text-center text-green-800">
+                                        ✅ Sua região está em nossa área de cobertura!
+                                    </p>
+                                    <p className="text-xs text-center text-green-700 mt-2">
+                                        Nossa equipe entrará em contato em até 24 horas úteis
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="border-t pt-6">
+                                <h3 className="font-bold text-center mb-4">Próximos Passos</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-2xl mb-2">📧</div>
+                                        <p className="font-bold">1. Confirmação por Email</p>
+                                        <p className="text-gray-600 text-xs mt-1">Você receberá um email com os detalhes da proposta</p>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-2xl mb-2">📞</div>
+                                        <p className="font-bold">2. Contato do Especialista</p>
+                                        <p className="text-gray-600 text-xs mt-1">Nossa equipe entrará em contato para finalizar</p>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-2xl mb-2">⚡</div>
+                                        <p className="font-bold">3. Início da Economia</p>
+                                        <p className="text-gray-600 text-xs mt-1">Comece a economizar na sua conta de luz</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-8 flex gap-4 justify-center no-print">
+                                <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                                    📄 Imprimir Proposta
+                                </button>
+                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">
+                                    ➕ Nova Proposta
+                                </button>
+                            </div>
+
+                            <div className="mt-6 text-center text-xs text-gray-500">
+                                <p>Data: {dataAtual} | ID da Proposta: {propostaId}</p>
+                                <p className="mt-2">Dúvidas? Entre em contato: contato@obyenergy.com</p>
                             </div>
                         </div>
                     </div>
@@ -274,9 +501,12 @@
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
                     <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
                         <div className="text-center mb-8">
-                            <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-20 w-auto mx-auto mb-4" />
+                            <div className="flex justify-center mb-4">
+                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-20 w-auto" />
+                            </div>
                             <h2 className="text-xl text-gray-600">Energia Renovável com Desconto</h2>
                         </div>
+
                         <div className="flex justify-between items-center mb-8">
                             {[1, 2, 3, 4].map((s) => (
                                 <div key={s} className="flex items-center flex-1">
@@ -285,37 +515,263 @@
                                 </div>
                             ))}
                         </div>
+
                         {step === 1 && (
                             <div className="space-y-6">
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <p className="text-sm text-blue-800">⚡ 100% Renovável | Sem obras | Desconto de {formData.cupom ? '20%' : '15%'}</p>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">CEP *</label>
                                     <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} onBlur={validateCEP} placeholder="00000-000" className={`w-full p-3 border rounded-lg ${errors.cep ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.cep && <p className="text-red-500 text-sm mt-1">{errors.cep}</p>}
+                                    {cepValidado && !errors.cep && !estadoForaCobertura && <p className="text-green-600 text-sm mt-1">✓ Disponibilidade confirmada!</p>}
+                                    {estadoForaCobertura && (
+                                        <div className="bg-yellow-50 border border-yellow-400 p-3 rounded-lg mt-2">
+                                            <p className="text-yellow-800 text-sm font-medium">⚠️ Atenção</p>
+                                            <p className="text-yellow-700 text-sm mt-1">Atualmente só temos energia disponível para o Paraná. Você será adicionado à nossa lista de espera.</p>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Nome *</label>
                                         <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nome ? 'border-red-500' : 'border-gray-300'}`} />
+                                        {errors.nome && <p className="text-red-500 text-sm mt-1">{errors.nome}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Sobrenome *</label>
                                         <input type="text" name="sobrenome" value={formData.sobrenome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.sobrenome ? 'border-red-500' : 'border-gray-300'}`} />
+                                        {errors.sobrenome && <p className="text-red-500 text-sm mt-1">{errors.sobrenome}</p>}
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Email *</label>
                                     <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Telefone *</label>
                                     <input type="tel" name="telefone" value={formData.telefone} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.telefone ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.telefone && <p className="text-red-500 text-sm mt-1">{errors.telefone}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Cupom (opcional)</label>
+                                    <input type="text" name="cupom" value={formData.cupom} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                    {formData.cupom && <p className="text-green-600 text-sm mt-1">✓ Desconto de 20%!</p>}
                                 </div>
                             </div>
                         )}
+
+                        {step === 2 && (
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Tipo de Conexão *</label>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {['trifasico', 'bifasico', 'monofasico'].map((tipo) => (
+                                            <button key={tipo} type="button" onClick={() => setFormData(prev => ({ ...prev, tipoConexao: tipo }))} className={`p-4 rounded-lg border-2 ${formData.tipoConexao === tipo ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
+                                                {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                                                <div className="text-xs text-gray-600 mt-1">Mín: {consumoMinimo[tipo]} kW</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {errors.tipoConexao && <p className="text-red-500 text-sm mt-1">{errors.tipoConexao}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Consumo Mensal (kW) *</label>
+                                    <input type="number" name="consumoKW" value={formData.consumoKW} onChange={handleInputChange} placeholder="Ex: 250" className={`w-full p-3 border rounded-lg ${errors.consumoKW ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.consumoKW && <p className="text-red-500 text-sm mt-1">{errors.consumoKW}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Número da Instalação *</label>
+                                    <input type="text" name="numeroInstalacao" value={formData.numeroInstalacao} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroInstalacao ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.numeroInstalacao && <p className="text-red-500 text-sm mt-1">{errors.numeroInstalacao}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Número do Cliente (opcional)</label>
+                                    <input type="text" name="numeroCliente" value={formData.numeroCliente} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Conta de Energia *</label>
+                                    <input type="file" name="arquivoConta" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoConta ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {formData.arquivoConta && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoConta.name}</p>}
+                                    {errors.arquivoConta && <p className="text-red-500 text-sm mt-1">{errors.arquivoConta}</p>}
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && simulacao && (
+                            <div className="space-y-6">
+                                <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center">
+                                    <h3 className="text-2xl font-bold mb-2">Sua Economia Mensal</h3>
+                                    <p className="text-5xl font-bold mb-2">R$ {simulacao.economiaMensal}</p>
+                                    <p className="text-lg">Desconto de {simulacao.desconto}%</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-gray-50 p-6 rounded-lg">
+                                        <p className="text-sm text-gray-600">Conta Atual</p>
+                                        <p className="text-2xl font-bold">R$ {simulacao.contaAtual}</p>
+                                    </div>
+                                    <div className="bg-green-50 p-6 rounded-lg">
+                                        <p className="text-sm text-gray-600">Com OBY Energy</p>
+                                        <p className="text-2xl font-bold text-green-600">R$ {simulacao.contaNova}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-blue-50 p-6 rounded-lg">
+                                    <p className="text-sm">Economia Anual</p>
+                                    <p className="text-3xl font-bold text-blue-700">R$ {simulacao.economiaAnual}</p>
+                                </div>
+                            </div>
+                        )}{step === 4 && (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'fisica' }))} className={`p-6 rounded-lg border-2 ${formData.tipoPessoa === 'fisica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
+                                        Pessoa Física
+                                    </button>
+                                    <button onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'juridica' }))} className={`p-6 rounded-lg border-2 ${formData.tipoPessoa === 'juridica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
+                                        Pessoa Jurídica
+                                    </button>
+                                </div>
+                                {formData.tipoPessoa === 'fisica' ? (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">CPF *</label>
+                                            <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" className={`w-full p-3 border rounded-lg ${errors.cpf ? 'border-red-500' : 'border-gray-300'}`} />
+                                            {errors.cpf && <p className="text-red-500 text-sm mt-1">{errors.cpf}</p>}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">RG *</label>
+                                            <input type="text" name="rg" value={formData.rg} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rg ? 'border-red-500' : 'border-gray-300'}`} />
+                                            {errors.rg && <p className="text-red-500 text-sm mt-1">{errors.rg}</p>}
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">RG/CNH Frente *</label>
+                                                <input type="file" name="arquivoRGFrente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGFrente ? 'border-red-500' : 'border-gray-300'}`} />
+                                                {formData.arquivoRGFrente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGFrente.name}</p>}
+                                                {errors.arquivoRGFrente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGFrente}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">RG/CNH Verso *</label>
+                                                <input type="file" name="arquivoRGVerso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGVerso ? 'border-red-500' : 'border-gray-300'}`} />
+                                                {formData.arquivoRGVerso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGVerso.name}</p>}
+                                                {errors.arquivoRGVerso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGVerso}</p>}
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">CNPJ *</label>
+                                            <input type="text" name="cnpj" value={formData.cnpj} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cnpj ? 'border-red-500' : 'border-gray-300'}`} />
+                                            {errors.cnpj && <p className="text-red-500 text-sm mt-1">{errors.cnpj}</p>}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Nome Fantasia *</label>
+                                            <input type="text" name="nomeFantasia" value={formData.nomeFantasia} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nomeFantasia ? 'border-red-500' : 'border-gray-300'}`} />
+                                            {errors.nomeFantasia && <p className="text-red-500 text-sm mt-1">{errors.nomeFantasia}</p>}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Razão Social *</label>
+                                            <input type="text" name="razaoSocial" value={formData.razaoSocial} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.razaoSocial ? 'border-red-500' : 'border-gray-300'}`} />
+                                            {errors.razaoSocial && <p className="text-red-500 text-sm mt-1">{errors.razaoSocial}</p>}
+                                        </div>
+                                        <div className="border-t pt-4">
+                                            <h3 className="font-bold mb-4">Representante Legal 1 *</h3>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="flex items-center mb-2">
+                                                        <input type="checkbox" name="copiarDadosContato" checked={formData.copiarDadosContato} onChange={handleInputChange} className="mr-2" />
+                                                        <span className="text-sm">Usar dados do contato</span>
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Nome Completo *</label>
+                                                    <input type="text" name="representanteLegal1" value={formData.representanteLegal1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.representanteLegal1 ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {errors.representanteLegal1 && <p className="text-red-500 text-sm mt-1">{errors.representanteLegal1}</p>}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">CPF *</label>
+                                                        <input type="text" name="cpfRepresentante1" value={formData.cpfRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpfRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
+                                                        {errors.cpfRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.cpfRepresentante1}</p>}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">RG *</label>
+                                                        <input type="text" name="rgRepresentante1" value={formData.rgRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
+                                                        {errors.rgRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.rgRepresentante1}</p>}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG/CPF Frente *</label>
+                                                    <input type="file" name="arquivoRGRep1Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Frente ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {formData.arquivoRGRep1Frente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Frente.name}</p>}
+                                                    {errors.arquivoRGRep1Frente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Frente}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG/CPF Verso *</label>
+                                                    <input type="file" name="arquivoRGRep1Verso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Verso ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {formData.arquivoRGRep1Verso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Verso.name}</p>}
+                                                    {errors.arquivoRGRep1Verso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Verso}</p>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="border-t pt-4">
+                                            <h3 className="font-bold mb-4">Representante Legal 2 (opcional)</h3>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Nome Completo</label>
+                                                    <input type="text" name="representanteLegal2" value={formData.representanteLegal2} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">CPF</label>
+                                                        <input type="text" name="cpfRepresentante2" value={formData.cpfRepresentante2} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">RG</label>
+                                                        <input type="text" name="rgRepresentante2" value={formData.rgRepresentante2} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG/CPF Frente</label>
+                                                    <input type="file" name="arquivoRGRep2Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className="w-full p-3 border rounded-lg border-gray-300" />
+                                                    {formData.arquivoRGRep2Frente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep2Frente.name}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">RG/CPF Verso</label>
+                                                    <input type="file" name="arquivoRGRep2Verso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className="w-full p-3 border rounded-lg border-gray-300" />
+                                                    {formData.arquivoRGRep2Verso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep2Verso.name}</p>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Contrato Social ou Ata de Eleição *</label>
+                                            <input type="file" name="contratoSocial" onChange={handleFileChange} accept=".pdf" className={`w-full p-3 border rounded-lg ${errors.contratoSocial ? 'border-red-500' : 'border-gray-300'}`} />
+                                            {formData.contratoSocial && <p className="text-green-600 text-sm mt-1">✓ {formData.contratoSocial.name}</p>}
+                                            {errors.contratoSocial && <p className="text-red-500 text-sm mt-1">{errors.contratoSocial}</p>}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         <div className="flex justify-between mt-8 pt-6 border-t">
-                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 bg-gray-200 rounded-lg">Voltar</button>}
+                            {step > 1 && (
+                                <button onClick={() => setStep(step - 1)} disabled={loading} className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50">
+                                    Voltar
+                                </button>
+                            )}
                             <div className="flex-1"></div>
-                            <button onClick={handleNext} className="px-8 py-3 bg-blue-600 text-white rounded-lg">Prosseguir</button>
+                            {step < 4 ? (
+                                <button onClick={handleNext} className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    Prosseguir
+                                </button>
+                            ) : (
+                                <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
+                                    Revisar Dados
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
