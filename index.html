@@ -21,28 +21,308 @@
         const { useState } = React;
         const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
-        
-        function App() {
+
+        function EnergyContractForm() {
+            const [step, setStep] = useState(1);
+            const [loading, setLoading] = useState(false);
+            const [mostrarMinuta, setMostrarMinuta] = useState(false);
+            const [mostrarRevisao, setMostrarRevisao] = useState(false);
+            const [propostaId, setPropostaId] = useState(null);
+            const [formData, setFormData] = useState({
+                cep: '', nome: '', sobrenome: '', cupom: '', email: '', telefone: '', valorMedioConta: '',
+                arquivoConta: null, tipoConexao: '', consumoKW: '', numeroInstalacao: '', numeroCliente: '',
+                tipoPessoa: 'fisica', cpf: '', rg: '', arquivoRGFrente: null, arquivoRGVerso: null,
+                cnpj: '', nomeFantasia: '', razaoSocial: '',
+                representanteLegal1: '', cpfRepresentante1: '', rgRepresentante1: '', 
+                arquivoRGRep1Frente: null, arquivoRGRep1Verso: null,
+                representanteLegal2: '', cpfRepresentante2: '', rgRepresentante2: '', 
+                arquivoRGRep2Frente: null, arquivoRGRep2Verso: null,
+                copiarDadosContato: false, tipoDocumentoEmpresa: 'contrato', contratoSocial: null,
+                estado: '', cidade: ''
+            });
+            const [errors, setErrors] = useState({});
+            const [simulacao, setSimulacao] = useState(null);
+            const [cepValidado, setCepValidado] = useState(false);
+            const [estadoForaCobertura, setEstadoForaCobertura] = useState(false);
+
+            const consumoMinimo = { trifasico: 100, bifasico: 50, monofasico: 30 };
+
+            const handleInputChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+                if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+            };
+
+            const handleFileChange = (e) => {
+                const { name, files } = e.target;
+                if (files && files[0]) {
+                    setFormData(prev => ({ ...prev, [name]: files[0] }));
+                    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+                }
+            };
+
+            const validateCEP = async () => {
+                const cepRegex = /^\d{5}-?\d{3}$/;
+                if (!cepRegex.test(formData.cep)) {
+                    setErrors(prev => ({ ...prev, cep: 'CEP inválido' }));
+                    return false;
+                }
+                try {
+                    const cepLimpo = formData.cep.replace('-', '');
+                    const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                    const data = await response.json();
+                    if (data.erro) {
+                        setErrors(prev => ({ ...prev, cep: 'CEP não encontrado' }));
+                        return false;
+                    }
+                    setFormData(prev => ({ ...prev, estado: data.uf, cidade: data.localidade }));
+                    if (data.uf !== 'PR') {
+                        setEstadoForaCobertura(true);
+                    } else {
+                        setEstadoForaCobertura(false);
+                    }
+                    setCepValidado(true);
+                    return true;
+                } catch (error) {
+                    setErrors(prev => ({ ...prev, cep: 'Erro ao validar CEP' }));
+                    return false;
+                }
+            };
+
+            const validateStep = (currentStep) => {
+                const newErrors = {};
+                if (currentStep === 1) {
+                    if (!formData.cep) newErrors.cep = 'CEP é obrigatório';
+                    if (!formData.nome) newErrors.nome = 'Nome é obrigatório';
+                    if (!formData.sobrenome) newErrors.sobrenome = 'Sobrenome é obrigatório';
+                    if (!formData.email) newErrors.email = 'Email é obrigatório';
+                    if (!formData.telefone) newErrors.telefone = 'Telefone é obrigatório';
+                }
+                if (currentStep === 2) {
+                    if (!formData.tipoConexao) newErrors.tipoConexao = 'Selecione o tipo de conexão';
+                    if (!formData.consumoKW) newErrors.consumoKW = 'Consumo é obrigatório';
+                    const minimo = consumoMinimo[formData.tipoConexao];
+                    if (formData.consumoKW && parseFloat(formData.consumoKW) < minimo) {
+                        newErrors.consumoKW = `Consumo mínimo para ${formData.tipoConexao} é ${minimo} kW`;
+                    }
+                    if (!formData.numeroInstalacao) newErrors.numeroInstalacao = 'Número da instalação é obrigatório';
+                    if (!formData.arquivoConta) newErrors.arquivoConta = 'Conta de energia é obrigatória';
+                }
+                if (currentStep === 4) {
+                    if (formData.tipoPessoa === 'fisica') {
+                        if (!formData.cpf) newErrors.cpf = 'CPF é obrigatório';
+                        if (!formData.rg) newErrors.rg = 'RG é obrigatório';
+                        if (!formData.arquivoRGFrente) newErrors.arquivoRGFrente = 'RG/CNH frente é obrigatório';
+                        if (!formData.arquivoRGVerso) newErrors.arquivoRGVerso = 'RG/CNH verso é obrigatório';
+                    } else {
+                        if (!formData.cnpj) newErrors.cnpj = 'CNPJ é obrigatório';
+                        if (!formData.nomeFantasia) newErrors.nomeFantasia = 'Nome Fantasia é obrigatório';
+                        if (!formData.razaoSocial) newErrors.razaoSocial = 'Razão Social é obrigatória';
+                        if (!formData.representanteLegal1) newErrors.representanteLegal1 = 'Representante Legal é obrigatório';
+                        if (!formData.cpfRepresentante1) newErrors.cpfRepresentante1 = 'CPF do Representante é obrigatório';
+                        if (!formData.rgRepresentante1) newErrors.rgRepresentante1 = 'RG do Representante é obrigatório';
+                        if (!formData.arquivoRGRep1Frente) newErrors.arquivoRGRep1Frente = 'RG/CPF frente do Representante é obrigatório';
+                        if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'RG/CPF verso do Representante é obrigatório';
+                        if (!formData.contratoSocial) newErrors.contratoSocial = 'Documento da empresa é obrigatório';
+                    }
+                }
+                setErrors(newErrors);
+                return Object.keys(newErrors).length === 0;
+            };
+
+            const calcularSimulacao = () => {
+                const consumo = parseFloat(formData.consumoKW);
+                const minimo = consumoMinimo[formData.tipoConexao];
+                const tarifaCopel = 0.85;
+                const desconto = formData.cupom ? 0.20 : 0.15;
+                const contaAtual = consumo * tarifaCopel;
+                const consumoExcedente = Math.max(consumo - minimo, 0);
+                const economiaDesconto = consumoExcedente * tarifaCopel * desconto;
+                const contaNova = contaAtual - economiaDesconto;
+                const economiaMensal = economiaDesconto;
+                const economiaAnual = economiaMensal * 12;
+                setSimulacao({
+                    contaAtual: contaAtual.toFixed(2),
+                    contaNova: contaNova.toFixed(2),
+                    economiaMensal: economiaMensal.toFixed(2),
+                    economiaAnual: economiaAnual.toFixed(2),
+                    desconto: (desconto * 100).toFixed(0),
+                    consumo, minimo
+                });
+            };
+
+            const uploadArquivo = async (file) => {
+                if (!file) return null;
+                try {
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/documentos/${fileName}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': file.type
+                        },
+                        body: file
+                    });
+                    if (!response.ok) return null;
+                    return `${SUPABASE_URL}/storage/v1/object/public/documentos/${fileName}`;
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const salvarProposta = async () => {
+                setLoading(true);
+                try {
+                    const urlContaEnergia = await uploadArquivo(formData.arquivoConta);
+                    const urlRGFrente = await uploadArquivo(formData.arquivoRGFrente);
+                    const urlRGVerso = await uploadArquivo(formData.arquivoRGVerso);
+                    const urlContratoSocial = await uploadArquivo(formData.contratoSocial);
+                    const urlRGRep1Frente = await uploadArquivo(formData.arquivoRGRep1Frente);
+                    const urlRGRep1Verso = await uploadArquivo(formData.arquivoRGRep1Verso);
+                    const urlRGRep2Frente = await uploadArquivo(formData.arquivoRGRep2Frente);
+                    const urlRGRep2Verso = await uploadArquivo(formData.arquivoRGRep2Verso);
+                    const propostaData = {
+                        nome: formData.nome, sobrenome: formData.sobrenome, cep: formData.cep,
+                        estado: formData.estado, cidade: formData.cidade, cupom: formData.cupom || null,
+                        tipo_conexao: formData.tipoConexao, consumo_kw: parseInt(formData.consumoKW),
+                        numero_instalacao: formData.numeroInstalacao, numero_cliente: formData.numeroCliente || null,
+                        tipo_pessoa: formData.tipoPessoa, cpf: formData.cpf || null, rg: formData.rg || null,
+                        cnpj: formData.cnpj || null, nome_fantasia: formData.nomeFantasia || null,
+                        razao_social: formData.razaoSocial || null,
+                        representante_legal_1: formData.representanteLegal1 || null,
+                        cpf_representante_1: formData.cpfRepresentante1 || null,
+                        rg_representante_1: formData.rgRepresentante1 || null,
+                        representante_legal_2: formData.representanteLegal2 || null,
+                        cpf_representante_2: formData.cpfRepresentante2 || null,
+                        rg_representante_2: formData.rgRepresentante2 || null,
+                        email: formData.email, telefone: formData.telefone,
+                        url_conta_energia: urlContaEnergia, url_rg_frente: urlRGFrente, url_rg_verso: urlRGVerso,
+                        url_contrato_social: urlContratoSocial,
+                        url_rg_rep_1_frente: urlRGRep1Frente, url_rg_rep_1_verso: urlRGRep1Verso,
+                        url_rg_rep_2_frente: urlRGRep2Frente, url_rg_rep_2_verso: urlRGRep2Verso,
+                        economia_mensal: parseFloat(simulacao.economiaMensal),
+                        economia_anual: parseFloat(simulacao.economiaAnual),
+                        desconto: parseInt(simulacao.desconto),
+                        status: estadoForaCobertura ? 'lista_espera' : 'pendente'
+                    };
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(propostaData)
+                    });
+                    if (!response.ok) throw new Error('Erro ao salvar');
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        setPropostaId(data[0].id);
+                        setMostrarRevisao(false);
+                        setMostrarMinuta(true);
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    alert('Erro ao salvar proposta. Tente novamente.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleNext = async () => {
+                if (step === 1) {
+                    const cepValido = await validateCEP();
+                    if (!cepValido) return;
+                }
+                if (validateStep(step)) {
+                    if (step === 2) calcularSimulacao();
+                    if (step === 4) {
+                        setMostrarRevisao(true);
+                        return;
+                    }
+                    setStep(step + 1);
+                }
+            };
+
+            if (mostrarMinuta) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
+                        <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-2xl">
+                            <div className="text-center mb-8">
+                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto mx-auto mb-4" />
+                                <div className="mb-4">
+                                    <div className="inline-block p-4 bg-green-100 rounded-full">
+                                        <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h2 className="text-3xl font-bold text-green-600 mb-2">Dados Enviados com Sucesso!</h2>
+                                <p className="text-lg text-gray-700">Aguarde que nossos especialistas entrarão em contato</p>
+                            </div>
+                            <div className="mt-8 flex gap-4 justify-center">
+                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg">Nova Proposta</button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
-                    <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-2xl">
-                        <img 
-                            src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" 
-                            alt="OBY Energy" 
-                            className="h-20 w-auto mx-auto mb-6" 
-                        />
-                        <h1 className="text-4xl font-bold text-gray-800 mb-4">Formulário OBY Energy</h1>
-                        <p className="text-xl text-gray-600 mb-2">✅ Sistema em funcionamento!</p>
-                        <p className="text-sm text-gray-500">Logo corrigida e pronta para uso</p>
-                        <div className="mt-8 p-4 bg-green-50 rounded-lg">
-                            <p className="text-green-800 font-medium">🎉 Deploy realizado com sucesso via GitHub!</p>
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
+                    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+                        <div className="text-center mb-8">
+                            <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-20 w-auto mx-auto mb-4" />
+                            <h2 className="text-xl text-gray-600">Energia Renovável com Desconto</h2>
+                        </div>
+                        <div className="flex justify-between items-center mb-8">
+                            {[1, 2, 3, 4].map((s) => (
+                                <div key={s} className="flex items-center flex-1">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${s <= step ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'}`}>{s}</div>
+                                    {s < 4 && <div className={`flex-1 h-1 mx-2 ${s < step ? 'bg-blue-600' : 'bg-gray-300'}`} />}
+                                </div>
+                            ))}
+                        </div>
+                        {step === 1 && (
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">CEP *</label>
+                                    <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} onBlur={validateCEP} placeholder="00000-000" className={`w-full p-3 border rounded-lg ${errors.cep ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {errors.cep && <p className="text-red-500 text-sm mt-1">{errors.cep}</p>}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Nome *</label>
+                                        <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nome ? 'border-red-500' : 'border-gray-300'}`} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Sobrenome *</label>
+                                        <input type="text" name="sobrenome" value={formData.sobrenome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.sobrenome ? 'border-red-500' : 'border-gray-300'}`} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Email *</label>
+                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Telefone *</label>
+                                    <input type="tel" name="telefone" value={formData.telefone} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.telefone ? 'border-red-500' : 'border-gray-300'}`} />
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex justify-between mt-8 pt-6 border-t">
+                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 bg-gray-200 rounded-lg">Voltar</button>}
+                            <div className="flex-1"></div>
+                            <button onClick={handleNext} className="px-8 py-3 bg-blue-600 text-white rounded-lg">Prosseguir</button>
                         </div>
                     </div>
                 </div>
             );
         }
-        
-        ReactDOM.render(<App />, document.getElementById('root'));
+
+        ReactDOM.render(<EnergyContractForm />, document.getElementById('root'));
     </script>
 </body>
 </html>
