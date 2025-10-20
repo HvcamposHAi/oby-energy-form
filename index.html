@@ -38,17 +38,14 @@
             const [formData, setFormData] = useState({
                 cep: '', nome: '', sobrenome: '', cupom: '', 
                 email: '', telefone: '', valorMedioConta: '',
-                // Endereço completo
                 logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
                 estado: '', cidade: '',
-                // Dados da instalação/qualificação
                 modalidadeTarifaria: '', distribuidoraEnergia: 'COPEL',
                 logradouroInstalacao: '', numeroInstalacaoEndereco: '',
                 complementoInstalacao: '', bairroInstalacao: '',
                 cidadeInstalacao: '', estadoInstalacao: '',
                 arquivoConta: null, tipoConexao: '', consumoKW: '', 
                 numeroInstalacao: '', numeroCliente: '',
-                // Documentação
                 tipoPessoa: 'fisica', cpf: '', rg: '', 
                 arquivoRGFrente: null, arquivoRGVerso: null,
                 cnpj: '', nomeFantasia: '', razaoSocial: '',
@@ -58,12 +55,10 @@
                 arquivoRGRep2Frente: null, arquivoRGRep2Verso: null,
                 copiarDadosContato: false,
                 tipoDocumentoEmpresa: 'contrato', contratoSocial: null,
-                // Responsável pelo pagamento
                 temResponsavelPagamento: false,
                 nomeResponsavelPagamento: '', cpfResponsavelPagamento: '',
                 rgResponsavelPagamento: '',
                 arquivoRGRespPagFrente: null, arquivoRGRespPagVerso: null,
-                // Aceites
                 aceiteTermoAdesao: false, aceiteDadosPessoais: false
             });
             const [errors, setErrors] = useState({});
@@ -185,39 +180,64 @@
             };
 
             const calcularSimulacao = async () => {
-                let tarifaCopel = 0.85;
+                // Buscar configurações do banco de dados
+                let tarifaTotal = 0.842355;
+                let proporcaoEnergia = 0.81;
+                let proporcaoImpostos = 0.19;
+                
                 try {
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=eq.tarifa_kwh`, {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
                         headers: {
                             'Authorization': `Bearer ${SUPABASE_KEY}`,
                             'apikey': SUPABASE_KEY
                         }
                     });
-                    const data = await response.json();
-                    if (data && data.length > 0) {
-                        tarifaCopel = parseFloat(data[0].valor);
-                    }
+                    const configs = await response.json();
+                    
+                    configs.forEach(config => {
+                        if (config.chave === 'tarifa_kwh') tarifaTotal = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_energia') proporcaoEnergia = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_impostos') proporcaoImpostos = parseFloat(config.valor);
+                    });
                 } catch (error) {
-                    console.log('Usando tarifa padrão');
+                    console.log('Usando valores padrão');
                 }
 
                 const consumo = parseFloat(formData.consumoKW);
                 const minimo = consumoMinimo[formData.tipoConexao];
                 const desconto = formData.cupom ? 0.20 : 0.15;
-                const contaAtual = consumo * tarifaCopel;
-                const consumoExcedente = Math.max(consumo - minimo, 0);
-                const economiaDesconto = consumoExcedente * tarifaCopel * desconto;
-                const contaNova = contaAtual - economiaDesconto;
-                const economiaMensal = economiaDesconto;
+                
+                const tarifaEnergia = tarifaTotal * proporcaoEnergia;
+                const tarifaImpostos = tarifaTotal * proporcaoImpostos;
+                
+                const consumoMinimoValor = minimo * tarifaTotal;
+                const consumoExcedente = consumo - minimo;
+                const impostosNaoCompensaveis = consumoExcedente * tarifaImpostos;
+                
+                const energiaCativaAtual = consumoExcedente * tarifaEnergia;
+                const contaAtual = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaAtual;
+                
+                const tarifaEnergiaComDesconto = tarifaEnergia * (1 - desconto);
+                const energiaCativaComDesconto = consumoExcedente * tarifaEnergiaComDesconto;
+                const contaNova = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaComDesconto;
+                
+                const economiaMensal = contaAtual - contaNova;
                 const economiaAnual = economiaMensal * 12;
-
+                const contasPorAno = 12 - (economiaAnual / contaAtual);
+                
                 setSimulacao({
                     contaAtual: contaAtual.toFixed(2),
                     contaNova: contaNova.toFixed(2),
                     economiaMensal: economiaMensal.toFixed(2),
                     economiaAnual: economiaAnual.toFixed(2),
                     desconto: (desconto * 100).toFixed(0),
-                    consumo, minimo
+                    consumo,
+                    minimo,
+                    consumoMinimoValor: consumoMinimoValor.toFixed(2),
+                    impostosNaoCompensaveis: impostosNaoCompensaveis.toFixed(2),
+                    energiaCativaAtual: energiaCativaAtual.toFixed(2),
+                    energiaCativaComDesconto: energiaCativaComDesconto.toFixed(2),
+                    contasPorAno: contasPorAno.toFixed(2)
                 });
             };
 
@@ -308,6 +328,13 @@
                         url_rg_resp_pag_verso: urlRGRespPagVerso,
                         aceite_termo_adesao: formData.aceiteTermoAdesao,
                         aceite_dados_pessoais: formData.aceiteDadosPessoais,
+                        consumo_minimo_valor: parseFloat(simulacao.consumoMinimoValor),
+                        impostos_nao_compensaveis: parseFloat(simulacao.impostosNaoCompensaveis),
+                        energia_cativa_atual: parseFloat(simulacao.energiaCativaAtual),
+                        energia_cativa_com_desconto: parseFloat(simulacao.energiaCativaComDesconto),
+                        conta_atual: parseFloat(simulacao.contaAtual),
+                        conta_nova: parseFloat(simulacao.contaNova),
+                        contas_por_ano: parseFloat(simulacao.contasPorAno),
                         economia_mensal: parseFloat(simulacao.economiaMensal),
                         economia_anual: parseFloat(simulacao.economiaAnual),
                         desconto: parseInt(simulacao.desconto),
@@ -407,6 +434,7 @@
                                         <p><strong>Economia Mensal:</strong> R$ {simulacao.economiaMensal}</p>
                                         <p><strong>Economia Anual:</strong> R$ {simulacao.economiaAnual}</p>
                                         <p><strong>Desconto:</strong> {simulacao.desconto}%</p>
+                                        <p><strong>Contas/Ano:</strong> {simulacao.contasPorAno}</p>
                                     </div>
                                 </div>
 
@@ -535,21 +563,15 @@
                             
                             {estadoForaCobertura ? (
                                 <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400 mb-6">
-                                    <p className="text-sm font-semibold text-center text-yellow-800">
-                                        ⏳ Você foi adicionado à lista de espera
-                                    </p>
+                                    <p className="text-sm font-semibold text-center text-yellow-800">⏳ Você foi adicionado à lista de espera</p>
                                     <p className="text-xs text-center text-yellow-700 mt-2">
                                         Atualmente atendemos apenas o Paraná. Entraremos em contato quando houver disponibilidade em {formData.estado}
                                     </p>
                                 </div>
                             ) : (
                                 <div className="bg-green-50 p-4 rounded-lg border-2 border-green-400 mb-6">
-                                    <p className="text-sm font-semibold text-center text-green-800">
-                                        ✅ Sua região está em nossa área de cobertura!
-                                    </p>
-                                    <p className="text-xs text-center text-green-700 mt-2">
-                                        Nossa equipe entrará em contato em até 24 horas úteis
-                                    </p>
+                                    <p className="text-sm font-semibold text-center text-green-800">✅ Sua região está em nossa área de cobertura!</p>
+                                    <p className="text-xs text-center text-green-700 mt-2">Nossa equipe entrará em contato em até 24 horas úteis</p>
                                 </div>
                             )}
 
@@ -756,7 +778,6 @@
                         {step === 4 && simulacao && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Coluna Esquerda - Simulação */}
                                     <div className="space-y-4">
                                         <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-6 rounded-xl text-center">
                                             <h3 className="text-lg font-semibold mb-2">Sua Economia Mensal com Energia</h3>
@@ -770,15 +791,15 @@
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex justify-between">
                                                         <span>Consumo Mínimo</span>
-                                                        <span className="font-semibold">R$ {(simulacao.minimo * 0.85).toFixed(2)}</span>
+                                                        <span className="font-semibold">R$ {simulacao.consumoMinimoValor}</span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span>Impostos Não Compensáveis</span>
-                                                        <span className="font-semibold">R$ {((simulacao.contaAtual - (simulacao.consumo * 0.85)) * 1).toFixed(2)}</span>
+                                                        <span className="font-semibold">R$ {simulacao.impostosNaoCompensaveis}</span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span>Energia Cativa</span>
-                                                        <span className="font-semibold">R$ {simulacao.contaAtual}</span>
+                                                        <span className="font-semibold">R$ {simulacao.energiaCativaAtual}</span>
                                                     </div>
                                                     <div className="border-t-2 border-blue-300 pt-2 flex justify-between font-bold text-base">
                                                         <span>Total</span>
@@ -792,15 +813,15 @@
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex justify-between">
                                                         <span>Consumo Mínimo</span>
-                                                        <span className="font-semibold">R$ {(simulacao.minimo * 0.85).toFixed(2)}</span>
+                                                        <span className="font-semibold">R$ {simulacao.consumoMinimoValor}</span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span>Impostos Não Compensáveis</span>
-                                                        <span className="font-semibold">R$ {((simulacao.contaAtual - (simulacao.consumo * 0.85)) * 1).toFixed(2)}</span>
+                                                        <span className="font-semibold">R$ {simulacao.impostosNaoCompensaveis}</span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span>Energia Cativa</span>
-                                                        <span className="font-semibold">R$ {simulacao.contaNova}</span>
+                                                        <span className="font-semibold">R$ {simulacao.energiaCativaComDesconto}</span>
                                                     </div>
                                                     <div className="border-t-2 border-green-400 pt-2 flex justify-between font-bold text-base text-green-700">
                                                         <span>Total</span>
@@ -813,7 +834,7 @@
                                         <div className="bg-green-100 p-4 rounded-lg border-2 border-green-400 text-center">
                                             <p className="text-green-800 font-bold text-lg">
                                                 Sua economia equivale a pagar somente<br/>
-                                                <span className="text-2xl">{(12 - (parseFloat(simulacao.economiaAnual) / parseFloat(simulacao.contaAtual))).toFixed(2)} contas ao ano</span>
+                                                <span className="text-2xl">{simulacao.contasPorAno} contas ao ano</span>
                                             </p>
                                         </div>
 
@@ -826,7 +847,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Coluna Direita - Dados de Entrada */}
                                     <div className="space-y-4">
                                         <div className="bg-white p-6 rounded-lg border-2 border-gray-300">
                                             <h3 className="text-xl font-bold mb-6 text-center border-b-2 border-gray-300 pb-3">
