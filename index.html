@@ -8,15 +8,9 @@
     <style>
         .step { display: none; }
         .step.active { display: block; }
-        .progress-bar {
-            transition: width 0.3s ease;
-        }
-        input:invalid:not(:placeholder-shown) {
-            border-color: #ef4444;
-        }
-        input:valid:not(:placeholder-shown) {
-            border-color: #10b981;
-        }
+        .progress-bar { transition: width 0.3s ease; }
+        input:invalid:not(:placeholder-shown) { border-color: #ef4444; }
+        input:valid:not(:placeholder-shown) { border-color: #10b981; }
         .loading {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #3b82f6;
@@ -33,7 +27,6 @@
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
     
-    <!-- Header -->
     <header class="bg-white shadow-sm">
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" class="h-12">
@@ -41,7 +34,6 @@
         </div>
     </header>
 
-    <!-- Progress Bar -->
     <div class="max-w-6xl mx-auto px-4 py-6">
         <div class="bg-white rounded-lg shadow-sm p-4">
             <div class="flex justify-between mb-2 text-sm text-gray-600">
@@ -54,11 +46,9 @@
         </div>
     </div>
 
-    <!-- Main Form -->
     <div class="max-w-6xl mx-auto px-4 pb-12">
         <form id="propostaForm" class="bg-white rounded-xl shadow-lg p-8">
             
-            <!-- PASSO 1: Tipo de Pessoa -->
             <div class="step active" data-step="1">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Você é pessoa física ou jurídica?</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,490 +71,252 @@
                 </div>
             </div>
 
-            <!-- PASSO 2: Dados Pessoais/Empresariais -->
             <div class="step" data-step="2">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Dados Cadastrais</h2>
-                
-                <!-- Campos Pessoa Física -->
                 <div id="camposPessoaFisica" class="space-y-4" style="display: none;">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
-                            <input type="text" name="nome" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Seu nome">
+                            <input type="text" name="nome" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Seu nome">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Sobrenome *</label>
-                            <input type="text" name="sobrenome" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Seu sobrenome">
+                            <input type="text" name="sobrenome" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Seu sobrenome">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
-                            <input type="text" name="cpf" id="cpf" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="000.000.000-00" maxlength="14">
+                            <input type="text" name="cpf" id="cpf" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="000.000.000-00" maxlength="14">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">RG *</label>
-                            <input type="text" name="rg" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="00.000.000-0">
+                            <input type="text" name="rg" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="00.000.000-0">
                         </div>
                     </div>
                 </div>
-
-                <!-- Campos Pessoa Jurídica -->
                 <div id="camposPessoaJuridica" class="space-y-4" style="display: none;">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Razão Social *</label>
-                            <input type="text" name="razao_social" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Razão Social da Empresa">
+                            <input type="text" name="razao_social" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Razão Social">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nome Fantasia *</label>
-                            <input type="text" name="nome_fantasia" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Nome Fantasia">
+                            <input type="text" name="nome_fantasia" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Nome Fantasia">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">CNPJ *</label>
-                        <input type="text" name="cnpj" id="cnpj" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="00.000.000/0000-00" maxlength="18">
+                        <input type="text" name="cnpj" id="cnpj" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="00.000.000/0000-00" maxlength="18">
                     </div>
-                    
                     <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-4">Representante Legal 1 *</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
-                            <input type="text" name="representante_legal_1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Nome do representante">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                            <input type="text" name="representante_legal_1" class="w-full p-3 border border-gray-300 rounded-lg">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
-                            <input type="text" name="cpf_representante_1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="000.000.000-00" maxlength="14">
+                            <input type="text" name="cpf_representante_1" class="w-full p-3 border border-gray-300 rounded-lg" maxlength="14">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">RG *</label>
-                            <input type="text" name="rg_representante_1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="00.000.000-0">
+                            <input type="text" name="rg_representante_1" class="w-full p-3 border border-gray-300 rounded-lg">
                         </div>
                     </div>
-
                     <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-4">Representante Legal 2 (Opcional)</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
-                            <input type="text" name="representante_legal_2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Nome do representante">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+                            <input type="text" name="representante_legal_2" class="w-full p-3 border border-gray-300 rounded-lg">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">CPF</label>
-                            <input type="text" name="cpf_representante_2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="000.000.000-00" maxlength="14">
+                            <input type="text" name="cpf_representante_2" class="w-full p-3 border border-gray-300 rounded-lg" maxlength="14">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">RG</label>
-                            <input type="text" name="rg_representante_2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="00.000.000-0">
+                            <input type="text" name="rg_representante_2" class="w-full p-3 border border-gray-300 rounded-lg">
                         </div>
                     </div>
                 </div>
-
-                <!-- Campos Comuns -->
                 <div class="space-y-4 mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                            <input type="email" name="email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="seu@email.com" required>
+                            <input type="email" name="email" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Telefone *</label>
-                            <input type="tel" name="telefone" id="telefone" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="(00) 00000-0000" maxlength="15" required>
+                            <input type="tel" name="telefone" id="telefone" class="w-full p-3 border border-gray-300 rounded-lg" maxlength="15" required>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PASSO 3: Endereço -->
             <div class="step" data-step="3">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Endereço</h2>
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">CEP *</label>
-                            <input type="text" name="cep" id="cep" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="00000-000" maxlength="9" required>
+                            <input type="text" name="cep" id="cep" class="w-full p-3 border border-gray-300 rounded-lg" maxlength="9" required>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Logradouro *</label>
-                            <input type="text" name="logradouro" id="logradouro" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Rua, Avenida..." required>
+                            <input type="text" name="logradouro" id="logradouro" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Número *</label>
-                            <input type="text" name="numero_endereco" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="123" required>
+                            <input type="text" name="numero_endereco" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Complemento</label>
-                            <input type="text" name="complemento" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Apto, Sala...">
+                            <input type="text" name="complemento" class="w-full p-3 border border-gray-300 rounded-lg">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Bairro *</label>
-                            <input type="text" name="bairro" id="bairro" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Centro" required>
+                            <input type="text" name="bairro" id="bairro" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Cidade *</label>
-                            <input type="text" name="cidade" id="cidade" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Curitiba" required>
+                            <input type="text" name="cidade" id="cidade" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
-                            <select name="estado" id="estado" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                                <option value="">Selecione</option>
-                                <option value="AC">Acre</option>
-                                <option value="AL">Alagoas</option>
-                                <option value="AP">Amapá</option>
-                                <option value="AM">Amazonas</option>
-                                <option value="BA">Bahia</option>
-                                <option value="CE">Ceará</option>
-                                <option value="DF">Distrito Federal</option>
-                                <option value="ES">Espírito Santo</option>
-                                <option value="GO">Goiás</option>
-                                <option value="MA">Maranhão</option>
-                                <option value="MT">Mato Grosso</option>
-                                <option value="MS">Mato Grosso do Sul</option>
-                                <option value="MG">Minas Gerais</option>
-                                <option value="PA">Pará</option>
-                                <option value="PB">Paraíba</option>
-                                <option value="PR">Paraná</option>
-                                <option value="PE">Pernambuco</option>
-                                <option value="PI">Piauí</option>
-                                <option value="RJ">Rio de Janeiro</option>
-                                <option value="RN">Rio Grande do Norte</option>
-                                <option value="RS">Rio Grande do Sul</option>
-                                <option value="RO">Rondônia</option>
-                                <option value="RR">Roraima</option>
-                                <option value="SC">Santa Catarina</option>
-                                <option value="SP">São Paulo</option>
-                                <option value="SE">Sergipe</option>
-                                <option value="TO">Tocantins</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <label class="flex items-start cursor-pointer">
-                        <input type="checkbox" id="enderecoInstalacaoDiferente" class="mt-1 mr-3">
-                        <span class="text-sm text-gray-700">O endereço de instalação é diferente do endereço cadastral</span>
-                    </label>
-                </div>
-
-                <div id="enderecoInstalacao" style="display: none;" class="mt-6 p-6 bg-gray-50 rounded-lg">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Endereço de Instalação</h3>
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Logradouro</label>
-                                <input type="text" name="logradouro_instalacao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Rua, Avenida...">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Número</label>
-                                <input type="text" name="numero_instalacao_endereco" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="123">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Complemento</label>
-                                <input type="text" name="complemento_instalacao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Apto, Sala...">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Bairro</label>
-                                <input type="text" name="bairro_instalacao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Centro">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Cidade</label>
-                                <input type="text" name="cidade_instalacao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Curitiba">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                            <select name="estado_instalacao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione</option>
-                                <option value="PR">Paraná</option>
-                                <option value="SC">Santa Catarina</option>
-                                <option value="SP">São Paulo</option>
-                            </select>
+                            <input type="text" name="estado" id="estado" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PASSO 4: Dados de Energia -->
             <div class="step" data-step="4">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Dados de Energia</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Distribuidora de Energia *</label>
-                        <select name="distribuidora_energia" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                            <option value="COPEL">COPEL - Companhia Paranaense de Energia</option>
-                            <option value="CELESC">CELESC - Centrais Elétricas de Santa Catarina</option>
-                            <option value="CPFL">CPFL - Companhia Paulista de Força e Luz</option>
-                            <option value="ENEL">ENEL - Enel Distribuição</option>
-                            <option value="CEMIG">CEMIG - Companhia Energética de Minas Gerais</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Distribuidora *</label>
+                        <select name="distribuidora_energia" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                            <option value="COPEL">COPEL</option>
+                            <option value="CELESC">CELESC</option>
+                            <option value="CPFL">CPFL</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Número de Instalação *</label>
-                            <input type="text" name="numero_instalacao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0000000000" required>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nº Instalação *</label>
+                            <input type="text" name="numero_instalacao" class="w-full p-3 border border-gray-300 rounded-lg" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Número do Cliente</label>
-                            <input type="text" name="numero_cliente" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0000000000">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Conexão *</label>
-                            <select name="tipo_conexao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo Conexão *</label>
+                            <select name="tipo_conexao" class="w-full p-3 border border-gray-300 rounded-lg" required>
                                 <option value="">Selecione</option>
                                 <option value="monofasico">Monofásico</option>
                                 <option value="bifasico">Bifásico</option>
                                 <option value="trifasico">Trifásico</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Modalidade Tarifária</label>
-                            <select name="modalidade_tarifaria" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione</option>
-                                <option value="convencional">Convencional</option>
-                                <option value="branca">Branca</option>
-                                <option value="verde">Verde</option>
-                                <option value="azul">Azul</option>
-                            </select>
-                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Consumo Médio Mensal (kWh) *</label>
-                        <input type="number" name="consumo_kw" id="consumo_kw" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="250" required min="1">
-                        <p class="text-sm text-gray-600 mt-1">Informe o consumo médio mensal em kWh conforme sua conta de energia</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Consumo (kWh) *</label>
+                        <input type="number" name="consumo_kw" id="consumo_kw" class="w-full p-3 border border-gray-300 rounded-lg" required>
                     </div>
-
-                    <div class="mt-6 p-4 bg-green-50 rounded-lg">
-                        <h3 class="font-semibold text-gray-800 mb-2">💰 Simulação de Economia</h3>
-                        <div id="resultadoEconomia" class="text-gray-700">
-                            <p>Preencha o consumo para ver sua economia estimada</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Cupom de Desconto</label>
-                        <input type="text" name="cupom" id="cupom" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Digite seu cupom">
-                        <p id="cupomStatus" class="text-sm mt-1"></p>
-                    </div>
+                    <div id="resultadoEconomia" class="p-4 bg-green-50 rounded-lg"></div>
                 </div>
             </div>
 
-            <!-- PASSO 5: Upload de Documentos -->
             <div class="step" data-step="5">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Upload de Documentos</h2>
-                
-                <div class="space-y-6">
-                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p class="text-sm text-yellow-800">
-                            📌 <strong>Importante:</strong> Envie fotos ou PDFs claros e legíveis dos documentos solicitados. Tamanho máximo: 5MB por arquivo.
-                        </p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Conta de Energia *</label>
+                        <input type="file" name="conta_energia" class="w-full p-3 border border-gray-300 rounded-lg" required>
                     </div>
-
-                    <!-- Conta de Energia -->
-                    <div class="border border-gray-300 rounded-lg p-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Conta de Energia (última conta) *</label>
-                        <input type="file" name="conta_energia" id="conta_energia" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                        <p class="text-xs text-gray-500 mt-1">Formatos aceitos: PDF, JPG, PNG</p>
-                    </div>
-
-                    <!-- Documentos Pessoa Física -->
                     <div id="uploadPessoaFisica" style="display: none;">
-                        <div class="border border-gray-300 rounded-lg p-4 mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">RG/CNH - Frente *</label>
-                            <input type="file" name="rg_frente" id="rg_frente" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div class="border border-gray-300 rounded-lg p-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">RG/CNH - Verso *</label>
-                            <input type="file" name="rg_verso" id="rg_verso" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">RG Frente *</label>
+                        <input type="file" name="rg_frente" id="rg_frente" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
-
-                    <!-- Documentos Pessoa Jurídica -->
                     <div id="uploadPessoaJuridica" style="display: none;">
-                        <div class="border border-gray-300 rounded-lg p-4 mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Contrato Social *</label>
-                            <input type="file" name="contrato_social" id="contrato_social" accept=".pdf" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Documentos Representante Legal 1 *</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div class="border border-gray-300 rounded-lg p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">RG/CNH - Frente *</label>
-                                <input type="file" name="rg_rep_1_frente" id="rg_rep_1_frente" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="border border-gray-300 rounded-lg p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">RG/CNH - Verso *</label>
-                                <input type="file" name="rg_rep_1_verso" id="rg_rep_1_verso" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Documentos Representante Legal 2 (se houver)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="border border-gray-300 rounded-lg p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">RG/CNH - Frente</label>
-                                <input type="file" name="rg_rep_2_frente" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="border border-gray-300 rounded-lg p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">RG/CNH - Verso</label>
-                                <input type="file" name="rg_rep_2_verso" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contrato Social *</label>
+                        <input type="file" name="contrato_social" id="contrato_social" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                 </div>
             </div>
 
-            <!-- PASSO 6: Revisão e Termos -->
             <div class="step" data-step="6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Revisão e Termos</h2>
-                
-                <div class="bg-gray-50 rounded-lg p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Resumo da Proposta</h3>
-                    <div id="resumoProposta" class="space-y-2 text-sm text-gray-700">
-                        <!-- Será preenchido via JavaScript -->
-                    </div>
-                </div>
-
+                <div id="resumoProposta" class="bg-gray-50 p-4 rounded-lg mb-6"></div>
                 <div class="space-y-4">
-                    <label class="flex items-start cursor-pointer p-4 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <label class="flex items-start">
                         <input type="checkbox" name="aceite_termo_adesao" class="mt-1 mr-3" required>
-                        <span class="text-sm text-gray-700">
-                            Li e concordo com o <a href="#" class="text-blue-600 hover:underline">Termo de Adesão ao Contrato de Consórcio</a> *
-                        </span>
+                        <span class="text-sm">Aceito os termos *</span>
                     </label>
-
-                    <label class="flex items-start cursor-pointer p-4 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <label class="flex items-start">
                         <input type="checkbox" name="aceite_dados_pessoais" class="mt-1 mr-3" required>
-                        <span class="text-sm text-gray-700">
-                            Autorizo o tratamento dos meus dados pessoais conforme <a href="#" class="text-blue-600 hover:underline">Política de Privacidade</a> *
-                        </span>
+                        <span class="text-sm">Autorizo dados *</span>
                     </label>
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Observações Adicionais</label>
-                    <textarea name="observacoes" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Alguma informação adicional que gostaria de compartilhar?"></textarea>
                 </div>
             </div>
 
-            <!-- Botões de Navegação -->
             <div class="flex justify-between mt-8">
-                <button type="button" id="btnVoltar" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition" style="display: none;">
-                    ← Voltar
-                </button>
+                <button type="button" id="btnVoltar" class="px-6 py-3 bg-gray-300 rounded-lg" style="display: none;">← Voltar</button>
                 <div></div>
-                <button type="button" id="btnProximo" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-                    Próximo →
-                </button>
-                <button type="submit" id="btnEnviar" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition" style="display: none;">
-                    ✓ Enviar Proposta
-                </button>
+                <button type="button" id="btnProximo" class="px-6 py-3 bg-blue-600 text-white rounded-lg">Próximo →</button>
+                <button type="submit" id="btnEnviar" class="px-6 py-3 bg-green-600 text-white rounded-lg" style="display: none;">✓ Enviar</button>
             </div>
         </form>
     </div>
 
-    <!-- Modal de Sucesso -->
-    <div id="modalSucesso" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 text-center">
+    <div id="modalSucesso" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" style="display: none;">
+        <div class="bg-white p-8 rounded-xl text-center">
             <div class="text-6xl mb-4">✅</div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Proposta Enviada com Sucesso!</h2>
-            <p class="text-gray-600 mb-6">Recebemos sua proposta e entraremos em contato em breve.</p>
-            <button onclick="location.reload()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-                Nova Proposta
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal de Loading -->
-    <div id="modalLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 text-center">
-            <div class="loading mx-auto mb-4"></div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">Enviando sua proposta...</h3>
-            <p class="text-gray-600 text-sm">Por favor, aguarde. Não feche esta janela.</p>
+            <h2 class="text-2xl font-bold mb-4">Sucesso!</h2>
+            <p class="mb-6">Proposta enviada com sucesso!</p>
+            <button onclick="location.reload()" class="px-6 py-3 bg-blue-600 text-white rounded-lg">OK</button>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
-
+        
         let currentStep = 1;
         const totalSteps = 6;
-        let tarifaKwh = 0.85;
         let propostaId = null;
-
-        async function carregarTarifa() {
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=eq.tarifa_kwh`, {
-                    headers: {
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'apikey': SUPABASE_KEY
-                    }
-                });
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    tarifaKwh = parseFloat(data[0].valor);
-                }
-            } catch (error) {
-                console.error('Erro ao carregar tarifa:', error);
-            }
-        }
-
-        carregarTarifa();
 
         function showStep(step) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.querySelector(`[data-step="${step}"]`).classList.add('active');
-            
             currentStep = step;
             document.getElementById('currentStep').textContent = step;
-            document.getElementById('progressBar').style.width = `${(step / totalSteps) * 100}%`;
-            document.getElementById('progressPercent').textContent = `${Math.round((step / totalSteps) * 100)}%`;
-            
+            document.getElementById('progressBar').style.width = `${(step/totalSteps)*100}%`;
+            document.getElementById('progressPercent').textContent = `${Math.round((step/totalSteps)*100)}%`;
             document.getElementById('btnVoltar').style.display = step > 1 ? 'block' : 'none';
             document.getElementById('btnProximo').style.display = step < totalSteps ? 'block' : 'none';
             document.getElementById('btnEnviar').style.display = step === totalSteps ? 'block' : 'none';
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            if (step === 6) {
-                gerarResumo();
-            }
+            if (step === 6) gerarResumo();
         }
 
         async function salvarEtapa(step) {
             console.log(`🔵 Salvando Etapa ${step}...`);
-            
             const form = document.getElementById('propostaForm');
             const formData = new FormData(form);
-            
             let dados = { status: 'pendente' };
-            
             formData.forEach((value, key) => {
-                if (value && key !== 'conta_energia' && key !== 'rg_frente' && key !== 'rg_verso' && 
-                    key !== 'contrato_social' && key !== 'rg_rep_1_frente' && key !== 'rg_rep_1_verso' &&
-                    key !== 'rg_rep_2_frente' && key !== 'rg_rep_2_verso') {
-                    dados[key] = value;
-                }
+                if (value) dados[key] = value;
             });
-
             dados.aceite_termo_adesao = formData.get('aceite_termo_adesao') === 'on';
             dados.aceite_dados_pessoais = formData.get('aceite_dados_pessoais') === 'on';
-
             if (dados.consumo_kw) dados.consumo_kw = parseInt(dados.consumo_kw);
-            if (dados.desconto) dados.desconto = parseInt(dados.desconto);
-            if (dados.economia_mensal) dados.economia_mensal = parseFloat(dados.economia_mensal);
-            if (dados.economia_anual) dados.economia_anual = parseFloat(dados.economia_anual);
-
+            
             try {
                 if (!propostaId) {
-                    console.log('🔵 Criando nova proposta...');
+                    console.log('🔵 Criando...');
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
                         method: 'POST',
                         headers: {
@@ -575,20 +327,14 @@
                         },
                         body: JSON.stringify(dados)
                     });
-                    
                     const result = await response.json();
-                    console.log('🔵 Resposta:', result);
-                    
                     if (response.ok && result[0]) {
                         propostaId = result[0].id;
-                        console.log(`✅ Proposta CRIADA! ID: ${propostaId}`);
+                        console.log(`✅ CRIADA! ID: ${propostaId}`);
                         return true;
-                    } else {
-                        console.error('❌ Erro:', result);
-                        throw new Error('Erro ao criar proposta');
                     }
                 } else {
-                    console.log(`🔵 Atualizando proposta ${propostaId}...`);
+                    console.log(`🔵 Atualizando ${propostaId}...`);
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas?id=eq.${propostaId}`, {
                         method: 'PATCH',
                         headers: {
@@ -598,137 +344,54 @@
                         },
                         body: JSON.stringify(dados)
                     });
-                    
                     if (response.ok) {
-                        console.log(`✅ Etapa ${step} SALVA!`);
+                        console.log(`✅ ATUALIZADA! Etapa ${step}`);
                         return true;
-                    } else {
-                        throw new Error('Erro ao atualizar');
                     }
                 }
             } catch (error) {
                 console.error('❌ ERRO:', error);
-                alert('Erro ao salvar. Verifique o console (F12)');
-                return false;
+                alert('Erro ao salvar: ' + error.message);
             }
+            return false;
         }
 
         document.getElementById('btnProximo').addEventListener('click', async () => {
-            if (validarPasso(currentStep)) {
-                document.getElementById('btnProximo').disabled = true;
-                document.getElementById('btnProximo').textContent = 'Salvando...';
-                
-                const salvou = await salvarEtapa(currentStep);
-                
-                document.getElementById('btnProximo').disabled = false;
-                document.getElementById('btnProximo').textContent = 'Próximo →';
-                
-                if (salvou) {
-                    showStep(currentStep + 1);
-                }
-            }
+            const btn = document.getElementById('btnProximo');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+            const salvou = await salvarEtapa(currentStep);
+            btn.disabled = false;
+            btn.textContent = 'Próximo →';
+            if (salvou) showStep(currentStep + 1);
         });
 
         document.getElementById('btnVoltar').addEventListener('click', () => {
             showStep(currentStep - 1);
         });
 
-        function validarPasso(step) {
-            const stepElement = document.querySelector(`[data-step="${step}"]`);
-            const inputs = stepElement.querySelectorAll('input[required], select[required]');
-            
-            for (let input of inputs) {
-                if (!input.value && input.offsetParent !== null) {
-                    input.focus();
-                    alert('Preencha todos os campos obrigatórios');
-                    return false;
-                }
-            }
-            return true;
-        }
-
         document.querySelectorAll('input[name="tipo_pessoa"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
-                const tipo = e.target.value;
-                
-                if (tipo === 'fisica') {
+                if (e.target.value === 'fisica') {
                     document.getElementById('camposPessoaFisica').style.display = 'block';
                     document.getElementById('camposPessoaJuridica').style.display = 'none';
                     document.getElementById('uploadPessoaFisica').style.display = 'block';
                     document.getElementById('uploadPessoaJuridica').style.display = 'none';
-                    
-                    document.querySelector('input[name="nome"]').required = true;
-                    document.querySelector('input[name="sobrenome"]').required = true;
-                    document.querySelector('input[name="cpf"]').required = true;
-                    document.querySelector('input[name="rg"]').required = true;
-                    
-                    document.querySelector('input[name="razao_social"]').required = false;
-                    document.querySelector('input[name="nome_fantasia"]').required = false;
-                    document.querySelector('input[name="cnpj"]').required = false;
-                    
                 } else {
                     document.getElementById('camposPessoaFisica').style.display = 'none';
                     document.getElementById('camposPessoaJuridica').style.display = 'block';
                     document.getElementById('uploadPessoaFisica').style.display = 'none';
                     document.getElementById('uploadPessoaJuridica').style.display = 'block';
-                    
-                    document.querySelector('input[name="razao_social"]').required = true;
-                    document.querySelector('input[name="nome_fantasia"]').required = true;
-                    document.querySelector('input[name="cnpj"]').required = true;
-                    
-                    document.querySelector('input[name="nome"]').required = false;
-                    document.querySelector('input[name="sobrenome"]').required = false;
-                    document.querySelector('input[name="cpf"]').required = false;
-                    document.querySelector('input[name="rg"]').required = false;
                 }
             });
         });
 
-        document.getElementById('cpf')?.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length <= 11) {
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            }
-            e.target.value = value;
-        });
-
-        document.getElementById('cnpj')?.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length <= 14) {
-                value = value.replace(/(\d{2})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d)/, '$1/$2');
-                value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-            }
-            e.target.value = value;
-        });
-
-        document.getElementById('telefone').addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length <= 11) {
-                value = value.replace(/(\d{2})(\d)/, '($1) $2');
-                value = value.replace(/(\d{5})(\d)/, '$1-$2');
-            }
-            e.target.value = value;
-        });
-
-        document.getElementById('cep').addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length <= 8) {
-                value = value.replace(/(\d{5})(\d)/, '$1-$2');
-            }
-            e.target.value = value;
-        });
-
-        document.getElementById('cep').addEventListener('blur', async (e) => {
+        document.getElementById('cep')?.addEventListener('blur', async (e) => {
             const cep = e.target.value.replace(/\D/g, '');
             if (cep.length === 8) {
                 try {
                     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
                     const data = await response.json();
-                    
                     if (!data.erro) {
                         document.getElementById('logradouro').value = data.logradouro;
                         document.getElementById('bairro').value = data.bairro;
@@ -736,97 +399,32 @@
                         document.getElementById('estado').value = data.uf;
                     }
                 } catch (error) {
-                    console.error('Erro ao buscar CEP:', error);
+                    console.error('Erro CEP:', error);
                 }
             }
         });
 
-        document.getElementById('enderecoInstalacaoDiferente').addEventListener('change', (e) => {
-            document.getElementById('enderecoInstalacao').style.display = e.target.checked ? 'block' : 'none';
-        });
-
-        document.getElementById('consumo_kw').addEventListener('input', calcularEconomia);
-        document.getElementById('cupom').addEventListener('blur', validarCupom);
-
-        function calcularEconomia() {
+        document.getElementById('consumo_kw')?.addEventListener('input', () => {
             const consumo = parseFloat(document.getElementById('consumo_kw').value) || 0;
-            const cupom = document.getElementById('cupom').value.trim();
-            
-            let desconto = 15;
-            
-            if (cupom.toUpperCase() === 'ENERGIA20') {
-                desconto = 20;
-            }
-            
-            const economia_mensal = (consumo * tarifaKwh * desconto / 100).toFixed(2);
-            const economia_anual = (economia_mensal * 12).toFixed(2);
-            
+            const economia = (consumo * 0.85 * 0.15).toFixed(2);
             document.getElementById('resultadoEconomia').innerHTML = `
-                <p class="font-semibold text-lg">Economia Estimada:</p>
-                <p class="text-green-600 font-bold text-xl">R$ ${economia_mensal} / mês</p>
-                <p class="text-green-600 font-bold text-xl">R$ ${economia_anual} / ano</p>
-                <p class="text-sm text-gray-600 mt-2">Desconto de ${desconto}%</p>
+                <p class="font-semibold">Economia Estimada:</p>
+                <p class="text-green-600 text-xl font-bold">R$ ${economia}/mês</p>
             `;
-            
-            document.querySelector('input[name="economia_mensal"]')?.remove();
-            document.querySelector('input[name="economia_anual"]')?.remove();
-            document.querySelector('input[name="desconto"]')?.remove();
-            
-            const form = document.getElementById('propostaForm');
-            form.insertAdjacentHTML('beforeend', `
-                <input type="hidden" name="economia_mensal" value="${economia_mensal}">
-                <input type="hidden" name="economia_anual" value="${economia_anual}">
-                <input type="hidden" name="desconto" value="${desconto}">
-            `);
-        }
-
-        function validarCupom() {
-            const cupom = document.getElementById('cupom').value.trim();
-            const statusEl = document.getElementById('cupomStatus');
-            
-            if (cupom === '') {
-                statusEl.textContent = '';
-                return;
-            }
-            
-            if (cupom.toUpperCase() === 'ENERGIA20') {
-                statusEl.textContent = '✅ Cupom válido! 20%';
-                statusEl.className = 'text-sm mt-1 text-green-600';
-                calcularEconomia();
-            } else {
-                statusEl.textContent = '❌ Inválido';
-                statusEl.className = 'text-sm mt-1 text-red-600';
-            }
-        }
+        });
 
         function gerarResumo() {
             const form = document.getElementById('propostaForm');
             const formData = new FormData(form);
-            const tipoPessoa = formData.get('tipo_pessoa');
-            
-            let html = '';
-            
-            if (tipoPessoa === 'fisica') {
-                html += `<p><strong>Nome:</strong> ${formData.get('nome')} ${formData.get('sobrenome')}</p>`;
-                html += `<p><strong>CPF:</strong> ${formData.get('cpf')}</p>`;
-            } else {
-                html += `<p><strong>Empresa:</strong> ${formData.get('nome_fantasia')}</p>`;
-                html += `<p><strong>CNPJ:</strong> ${formData.get('cnpj')}</p>`;
-            }
-            
-            html += `<p><strong>Email:</strong> ${formData.get('email')}</p>`;
-            html += `<p><strong>Consumo:</strong> ${formData.get('consumo_kw')} kWh</p>`;
-            
+            let html = '<p><strong>Resumo:</strong></p>';
+            html += `<p>Email: ${formData.get('email')}</p>`;
+            html += `<p>Consumo: ${formData.get('consumo_kw')} kWh</p>`;
             document.getElementById('resumoProposta').innerHTML = html;
         }
 
         document.getElementById('propostaForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if (!validarPasso(6)) return;
-            
             const salvou = await salvarEtapa(6);
-            
             if (salvou) {
                 document.getElementById('modalSucesso').style.display = 'flex';
             }
