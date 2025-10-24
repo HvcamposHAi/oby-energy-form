@@ -1,526 +1,256 @@
-<script>
-    const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
-
-    let currentStep = 1;
-    const totalSteps = 6;
-    let tarifaKwh = 0.85;
-    let propostaId = null; // ID da proposta sendo editada
-
-    // Verificar se já existe proposta em andamento
-    window.addEventListener('load', () => {
-        const savedId = localStorage.getItem('proposta_em_andamento');
-        if (savedId) {
-            if (confirm('Você tem uma proposta em andamento. Deseja continuar de onde parou?')) {
-                propostaId = savedId;
-                carregarPropostaExistente(savedId);
-            } else {
-                localStorage.removeItem('proposta_em_andamento');
-            }
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBY Energy - Proposta de Energia Solar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step { display: none; }
+        .step.active { display: block; }
+        .progress-bar { transition: width 0.3s ease; }
+        .loading {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
         }
-    });
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
+    
+    <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <h1 class="text-xl font-bold text-gray-800">Proposta de Energia Solar - OBY Energy</h1>
+        </div>
+    </header>
 
-    // Carregar proposta existente
-    async function carregarPropostaExistente(id) {
-        try {
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas?id=eq.${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'apikey': SUPABASE_KEY
-                }
+    <div class="max-w-6xl mx-auto px-4 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex justify-between mb-2 text-sm text-gray-600">
+                <span>Passo <span id="currentStep">1</span> de 6</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progressBar" class="progress-bar bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 pb-12">
+        <form id="propostaForm" class="bg-white rounded-xl shadow-lg p-8">
+            
+            <!-- PASSO 1 -->
+            <div class="step active" data-step="1">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Você é pessoa física ou jurídica?</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo_pessoa" value="fisica" class="peer sr-only" required>
+                        <div class="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition">
+                            <div class="text-4xl mb-2">👤</div>
+                            <h3 class="text-xl font-semibold">Pessoa Física</h3>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo_pessoa" value="juridica" class="peer sr-only" required>
+                        <div class="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition">
+                            <div class="text-4xl mb-2">🏢</div>
+                            <h3 class="text-xl font-semibold">Pessoa Jurídica</h3>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- PASSO 2 -->
+            <div class="step" data-step="2">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Dados Cadastrais</h2>
+                
+                <div id="camposPessoaFisica" style="display: none;">
+                    <input type="text" name="nome" placeholder="Nome" class="w-full p-3 border mb-3 rounded">
+                    <input type="text" name="sobrenome" placeholder="Sobrenome" class="w-full p-3 border mb-3 rounded">
+                    <input type="text" name="cpf" placeholder="CPF" class="w-full p-3 border mb-3 rounded">
+                    <input type="text" name="rg" placeholder="RG" class="w-full p-3 border mb-3 rounded">
+                </div>
+
+                <div id="camposPessoaJuridica" style="display: none;">
+                    <input type="text" name="razao_social" placeholder="Razão Social" class="w-full p-3 border mb-3 rounded">
+                    <input type="text" name="nome_fantasia" placeholder="Nome Fantasia" class="w-full p-3 border mb-3 rounded">
+                    <input type="text" name="cnpj" placeholder="CNPJ" class="w-full p-3 border mb-3 rounded">
+                </div>
+
+                <input type="email" name="email" placeholder="Email" class="w-full p-3 border mb-3 rounded" required>
+                <input type="tel" name="telefone" placeholder="Telefone" class="w-full p-3 border rounded" required>
+            </div>
+
+            <!-- PASSO 3 -->
+            <div class="step" data-step="3">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Endereço</h2>
+                <input type="text" name="cep" placeholder="CEP" class="w-full p-3 border mb-3 rounded" required>
+                <input type="text" name="logradouro" placeholder="Logradouro" class="w-full p-3 border mb-3 rounded" required>
+                <input type="text" name="numero_endereco" placeholder="Número" class="w-full p-3 border mb-3 rounded" required>
+                <input type="text" name="bairro" placeholder="Bairro" class="w-full p-3 border mb-3 rounded" required>
+                <input type="text" name="cidade" placeholder="Cidade" class="w-full p-3 border mb-3 rounded" required>
+                <input type="text" name="estado" placeholder="Estado (UF)" class="w-full p-3 border rounded" required>
+            </div>
+
+            <!-- PASSO 4 -->
+            <div class="step" data-step="4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Dados de Energia</h2>
+                <input type="text" name="numero_instalacao" placeholder="Número de Instalação" class="w-full p-3 border mb-3 rounded" required>
+                <select name="tipo_conexao" class="w-full p-3 border mb-3 rounded" required>
+                    <option value="">Tipo de Conexão</option>
+                    <option value="monofasico">Monofásico</option>
+                    <option value="bifasico">Bifásico</option>
+                    <option value="trifasico">Trifásico</option>
+                </select>
+                <input type="number" name="consumo_kw" placeholder="Consumo Mensal (kWh)" class="w-full p-3 border rounded" required>
+            </div>
+
+            <!-- PASSO 5 -->
+            <div class="step" data-step="5">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Upload de Documentos</h2>
+                <p class="mb-4 text-gray-600">Envie os documentos necessários</p>
+                <input type="file" name="conta_energia" class="w-full p-3 border mb-3 rounded">
+            </div>
+
+            <!-- PASSO 6 -->
+            <div class="step" data-step="6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Revisão e Termos</h2>
+                <div id="resumo" class="bg-gray-50 p-4 rounded mb-4"></div>
+                <label class="flex items-center mb-3">
+                    <input type="checkbox" name="aceite_termo_adesao" required class="mr-2">
+                    <span>Aceito os termos</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" name="aceite_dados_pessoais" required class="mr-2">
+                    <span>Autorizo tratamento de dados</span>
+                </label>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex justify-between mt-8">
+                <button type="button" id="btnVoltar" class="px-6 py-3 bg-gray-300 rounded" style="display: none;">Voltar</button>
+                <div></div>
+                <button type="button" id="btnProximo" class="px-6 py-3 bg-blue-600 text-white rounded">Próximo</button>
+                <button type="submit" id="btnEnviar" class="px-6 py-3 bg-green-600 text-white rounded" style="display: none;">Enviar</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="modalSucesso" style="display: none;" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl text-center">
+            <h2 class="text-2xl font-bold mb-4">✅ Sucesso!</h2>
+            <p>Proposta enviada com sucesso!</p>
+            <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
+        
+        let currentStep = 1;
+        let propostaId = null;
+
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`[data-step="${step}"]`).classList.add('active');
+            currentStep = step;
+            
+            document.getElementById('currentStep').textContent = step;
+            document.getElementById('progressBar').style.width = `${(step/6)*100}%`;
+            document.getElementById('progressPercent').textContent = `${Math.round((step/6)*100)}%`;
+            
+            document.getElementById('btnVoltar').style.display = step > 1 ? 'block' : 'none';
+            document.getElementById('btnProximo').style.display = step < 6 ? 'block' : 'none';
+            document.getElementById('btnEnviar').style.display = step === 6 ? 'block' : 'none';
+        }
+
+        async function salvarEtapa(step) {
+            const form = document.getElementById('propostaForm');
+            const formData = new FormData(form);
+            const dados = {};
+            
+            formData.forEach((value, key) => {
+                if (value) dados[key] = value;
             });
-            const data = await response.json();
-            if (data && data.length > 0) {
-                preencherFormulario(data[0]);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar proposta:', error);
-        }
-    }
 
-    // Preencher formulário com dados salvos
-    function preencherFormulario(dados) {
-        const form = document.getElementById('propostaForm');
-        for (const [key, value] of Object.entries(dados)) {
-            const input = form.elements[key];
-            if (input && value) {
-                if (input.type === 'radio') {
-                    form.querySelectorAll(`input[name="${key}"][value="${value}"]`).forEach(r => r.checked = true);
-                } else if (input.type === 'checkbox') {
-                    input.checked = value;
+            dados.status = 'pendente';
+
+            try {
+                if (!propostaId) {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(dados)
+                    });
+                    const result = await response.json();
+                    if (result[0]) {
+                        propostaId = result[0].id;
+                        console.log('✅ Criado:', propostaId);
+                        return true;
+                    }
                 } else {
-                    input.value = value;
-                }
-            }
-        }
-        // Disparar evento change no tipo_pessoa para mostrar campos corretos
-        if (dados.tipo_pessoa) {
-            const radio = form.querySelector(`input[name="tipo_pessoa"][value="${dados.tipo_pessoa}"]`);
-            if (radio) {
-                radio.dispatchEvent(new Event('change'));
-            }
-        }
-    }
-
-    // Carregar tarifa do banco
-    async function carregarTarifa() {
-        try {
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=eq.tarifa_kwh`, {
-                headers: {
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'apikey': SUPABASE_KEY
-                }
-            });
-            const data = await response.json();
-            if (data && data.length > 0) {
-                tarifaKwh = parseFloat(data[0].valor);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar tarifa:', error);
-        }
-    }
-
-    carregarTarifa();
-
-    // Navegação entre passos
-    function showStep(step) {
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.querySelector(`[data-step="${step}"]`).classList.add('active');
-        
-        currentStep = step;
-        document.getElementById('currentStep').textContent = step;
-        document.getElementById('progressBar').style.width = `${(step / totalSteps) * 100}%`;
-        document.getElementById('progressPercent').textContent = `${Math.round((step / totalSteps) * 100)}%`;
-        
-        document.getElementById('btnVoltar').style.display = step > 1 ? 'block' : 'none';
-        document.getElementById('btnProximo').style.display = step < totalSteps ? 'block' : 'none';
-        document.getElementById('btnEnviar').style.display = step === totalSteps ? 'block' : 'none';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        if (step === 6) {
-            gerarResumo();
-        }
-    }
-
-    // Salvar etapa no banco
-    async function salvarEtapa(step) {
-        const form = document.getElementById('propostaForm');
-        const formData = new FormData(form);
-        
-        let dados = {};
-        
-        // Coletar dados da etapa atual
-        switch(step) {
-            case 1:
-                dados = {
-                    tipo_pessoa: formData.get('tipo_pessoa'),
-                    status: 'pendente'
-                };
-                break;
-                
-            case 2:
-                dados = {
-                    nome: formData.get('nome') || formData.get('razao_social'),
-                    sobrenome: formData.get('sobrenome'),
-                    cpf: formData.get('cpf'),
-                    rg: formData.get('rg'),
-                    cnpj: formData.get('cnpj'),
-                    razao_social: formData.get('razao_social'),
-                    nome_fantasia: formData.get('nome_fantasia'),
-                    representante_legal_1: formData.get('representante_legal_1'),
-                    cpf_representante_1: formData.get('cpf_representante_1'),
-                    rg_representante_1: formData.get('rg_representante_1'),
-                    representante_legal_2: formData.get('representante_legal_2'),
-                    cpf_representante_2: formData.get('cpf_representante_2'),
-                    rg_representante_2: formData.get('rg_representante_2'),
-                    email: formData.get('email'),
-                    telefone: formData.get('telefone')
-                };
-                break;
-                
-            case 3:
-                dados = {
-                    cep: formData.get('cep'),
-                    logradouro: formData.get('logradouro'),
-                    numero_endereco: formData.get('numero_endereco'),
-                    complemento: formData.get('complemento'),
-                    bairro: formData.get('bairro'),
-                    cidade: formData.get('cidade'),
-                    estado: formData.get('estado'),
-                    logradouro_instalacao: formData.get('logradouro_instalacao'),
-                    numero_instalacao_endereco: formData.get('numero_instalacao_endereco'),
-                    complemento_instalacao: formData.get('complemento_instalacao'),
-                    bairro_instalacao: formData.get('bairro_instalacao'),
-                    cidade_instalacao: formData.get('cidade_instalacao'),
-                    estado_instalacao: formData.get('estado_instalacao')
-                };
-                break;
-                
-            case 4:
-                dados = {
-                    distribuidora_energia: formData.get('distribuidora_energia'),
-                    numero_instalacao: formData.get('numero_instalacao'),
-                    numero_cliente: formData.get('numero_cliente'),
-                    tipo_conexao: formData.get('tipo_conexao'),
-                    modalidade_tarifaria: formData.get('modalidade_tarifaria'),
-                    consumo_kw: parseInt(formData.get('consumo_kw')),
-                    economia_mensal: parseFloat(formData.get('economia_mensal')),
-                    economia_anual: parseFloat(formData.get('economia_anual')),
-                    desconto: parseInt(formData.get('desconto')),
-                    cupom: formData.get('cupom')
-                };
-                break;
-                
-            case 5:
-                // Upload de arquivos será feito aqui
-                const timestamp = Date.now();
-                const arquivos = [
-                    'conta_energia',
-                    'rg_frente', 'rg_verso',
-                    'contrato_social',
-                    'rg_rep_1_frente', 'rg_rep_1_verso',
-                    'rg_rep_2_frente', 'rg_rep_2_verso'
-                ];
-                
-                document.getElementById('modalLoading').style.display = 'flex';
-                
-                for (const campo of arquivos) {
-                    const file = form.elements[campo]?.files[0];
-                    if (file) {
-                        const path = `propostas/${timestamp}_${campo}_${file.name}`;
-                        const url = await uploadArquivo(file, 'documentos', path);
-                        if (url) {
-                            dados[`url_${campo}`] = url;
-                        }
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas?id=eq.${propostaId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(dados)
+                    });
+                    if (response.ok) {
+                        console.log('✅ Atualizado:', propostaId);
+                        return true;
                     }
                 }
-                
-                document.getElementById('modalLoading').style.display = 'none';
-                break;
-                
-            case 6:
-                dados = {
-                    aceite_termo_adesao: formData.get('aceite_termo_adesao') === 'on',
-                    aceite_dados_pessoais: formData.get('aceite_dados_pessoais') === 'on',
-                    observacoes: formData.get('observacoes')
-                };
-                break;
-        }
-        
-        try {
-            if (!propostaId) {
-                // INSERT - Criar novo registro
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'apikey': SUPABASE_KEY,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(dados)
-                });
-                
-                const result = await response.json();
-                if (response.ok && result[0]) {
-                    propostaId = result[0].id;
-                    localStorage.setItem('proposta_em_andamento', propostaId);
-                    console.log('✅ Proposta criada:', propostaId);
-                    return true;
-                } else {
-                    throw new Error('Erro ao criar proposta');
-                }
-            } else {
-                // UPDATE - Atualizar registro existente
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas?id=eq.${propostaId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'apikey': SUPABASE_KEY,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(dados)
-                });
-                
-                if (response.ok) {
-                    console.log('✅ Proposta atualizada - Etapa', step);
-                    return true;
-                } else {
-                    throw new Error('Erro ao atualizar proposta');
-                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao salvar: ' + error.message);
             }
-        } catch (error) {
-            console.error('Erro ao salvar etapa:', error);
-            alert('Erro ao salvar dados. Tente novamente.');
             return false;
         }
-    }
 
-    // Botão próximo - valida e salva antes de avançar
-    document.getElementById('btnProximo').addEventListener('click', async () => {
-        if (validarPasso(currentStep)) {
+        document.getElementById('btnProximo').addEventListener('click', async () => {
             const salvou = await salvarEtapa(currentStep);
+            if (salvou) showStep(currentStep + 1);
+        });
+
+        document.getElementById('btnVoltar').addEventListener('click', () => {
+            showStep(currentStep - 1);
+        });
+
+        document.querySelectorAll('input[name="tipo_pessoa"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'fisica') {
+                    document.getElementById('camposPessoaFisica').style.display = 'block';
+                    document.getElementById('camposPessoaJuridica').style.display = 'none';
+                } else {
+                    document.getElementById('camposPessoaFisica').style.display = 'none';
+                    document.getElementById('camposPessoaJuridica').style.display = 'block';
+                }
+            });
+        });
+
+        document.getElementById('propostaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const salvou = await salvarEtapa(6);
             if (salvou) {
-                showStep(currentStep + 1);
-            }
-        }
-    });
-
-    document.getElementById('btnVoltar').addEventListener('click', () => {
-        showStep(currentStep - 1);
-    });
-
-    // Validação de passos
-    function validarPasso(step) {
-        const stepElement = document.querySelector(`[data-step="${step}"]`);
-        const inputs = stepElement.querySelectorAll('input[required], select[required], textarea[required]');
-        
-        for (let input of inputs) {
-            if (!input.value && input.offsetParent !== null) {
-                input.focus();
-                input.classList.add('border-red-500');
-                setTimeout(() => input.classList.remove('border-red-500'), 2000);
-                alert('Por favor, preencha todos os campos obrigatórios');
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Tipo de pessoa - mostrar campos específicos
-    document.querySelectorAll('input[name="tipo_pessoa"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const tipo = e.target.value;
-            
-            if (tipo === 'fisica') {
-                document.getElementById('camposPessoaFisica').style.display = 'block';
-                document.getElementById('camposPessoaJuridica').style.display = 'none';
-                document.getElementById('uploadPessoaFisica').style.display = 'block';
-                document.getElementById('uploadPessoaJuridica').style.display = 'none';
-                
-                document.querySelector('input[name="nome"]').required = true;
-                document.querySelector('input[name="sobrenome"]').required = true;
-                document.querySelector('input[name="cpf"]').required = true;
-                document.querySelector('input[name="rg"]').required = true;
-                document.getElementById('rg_frente').required = true;
-                document.getElementById('rg_verso').required = true;
-                
-                document.querySelector('input[name="razao_social"]').required = false;
-                document.querySelector('input[name="nome_fantasia"]').required = false;
-                document.querySelector('input[name="cnpj"]').required = false;
-                
-            } else {
-                document.getElementById('camposPessoaFisica').style.display = 'none';
-                document.getElementById('camposPessoaJuridica').style.display = 'block';
-                document.getElementById('uploadPessoaFisica').style.display = 'none';
-                document.getElementById('uploadPessoaJuridica').style.display = 'block';
-                
-                document.querySelector('input[name="razao_social"]').required = true;
-                document.querySelector('input[name="nome_fantasia"]').required = true;
-                document.querySelector('input[name="cnpj"]').required = true;
-                document.querySelector('input[name="representante_legal_1"]').required = true;
-                document.querySelector('input[name="cpf_representante_1"]').required = true;
-                document.querySelector('input[name="rg_representante_1"]').required = true;
-                document.getElementById('contrato_social').required = true;
-                document.getElementById('rg_rep_1_frente').required = true;
-                document.getElementById('rg_rep_1_verso').required = true;
-                
-                document.querySelector('input[name="nome"]').required = false;
-                document.querySelector('input[name="sobrenome"]').required = false;
-                document.querySelector('input[name="cpf"]').required = false;
-                document.querySelector('input[name="rg"]').required = false;
-                document.getElementById('rg_frente').required = false;
-                document.getElementById('rg_verso').required = false;
+                document.getElementById('modalSucesso').style.display = 'flex';
             }
         });
-    });
-
-    // Máscaras
-    document.getElementById('cpf')?.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        }
-        e.target.value = value;
-    });
-
-    document.getElementById('cnpj')?.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 14) {
-            value = value.replace(/(\d{2})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1/$2');
-            value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-        }
-        e.target.value = value;
-    });
-
-    document.getElementById('telefone').addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            value = value.replace(/(\d{2})(\d)/, '($1) $2');
-            value = value.replace(/(\d{5})(\d)/, '$1-$2');
-        }
-        e.target.value = value;
-    });
-
-    document.getElementById('cep').addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 8) {
-            value = value.replace(/(\d{5})(\d)/, '$1-$2');
-        }
-        e.target.value = value;
-    });
-
-    // Buscar CEP
-    document.getElementById('cep').addEventListener('blur', async (e) => {
-        const cep = e.target.value.replace(/\D/g, '');
-        if (cep.length === 8) {
-            try {
-                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-                const data = await response.json();
-                
-                if (!data.erro) {
-                    document.getElementById('logradouro').value = data.logradouro;
-                    document.getElementById('bairro').value = data.bairro;
-                    document.getElementById('cidade').value = data.localidade;
-                    document.getElementById('estado').value = data.uf;
-                } else {
-                    alert('CEP não encontrado');
-                }
-            } catch (error) {
-                console.error('Erro ao buscar CEP:', error);
-            }
-        }
-    });
-
-    // Endereço de instalação diferente
-    document.getElementById('enderecoInstalacaoDiferente').addEventListener('change', (e) => {
-        document.getElementById('enderecoInstalacao').style.display = e.target.checked ? 'block' : 'none';
-    });
-
-    // Calcular economia
-    document.getElementById('consumo_kw').addEventListener('input', calcularEconomia);
-    document.getElementById('cupom').addEventListener('blur', validarCupom);
-
-    function calcularEconomia() {
-        const consumo = parseFloat(document.getElementById('consumo_kw').value) || 0;
-        const cupom = document.getElementById('cupom').value.trim();
-        
-        let desconto = 15;
-        
-        if (cupom.toUpperCase() === 'ENERGIA20') {
-            desconto = 20;
-        }
-        
-        const economia_mensal = (consumo * tarifaKwh * desconto / 100).toFixed(2);
-        const economia_anual = (economia_mensal * 12).toFixed(2);
-        
-        document.getElementById('resultadoEconomia').innerHTML = `
-            <p class="font-semibold text-lg">Economia Estimada:</p>
-            <p class="text-green-600 font-bold text-xl">R$ ${economia_mensal} / mês</p>
-            <p class="text-green-600 font-bold text-xl">R$ ${economia_anual} / ano</p>
-            <p class="text-sm text-gray-600 mt-2">Desconto de ${desconto}% sobre a tarifa de energia</p>
-        `;
-        
-        document.querySelector('input[name="economia_mensal"]')?.remove();
-        document.querySelector('input[name="economia_anual"]')?.remove();
-        document.querySelector('input[name="desconto"]')?.remove();
-        
-        const form = document.getElementById('propostaForm');
-        form.insertAdjacentHTML('beforeend', `
-            <input type="hidden" name="economia_mensal" value="${economia_mensal}">
-            <input type="hidden" name="economia_anual" value="${economia_anual}">
-            <input type="hidden" name="desconto" value="${desconto}">
-        `);
-    }
-
-    function validarCupom() {
-        const cupom = document.getElementById('cupom').value.trim();
-        const statusEl = document.getElementById('cupomStatus');
-        
-        if (cupom === '') {
-            statusEl.textContent = '';
-            return;
-        }
-        
-        if (cupom.toUpperCase() === 'ENERGIA20') {
-            statusEl.textContent = '✅ Cupom válido! Desconto de 20%';
-            statusEl.className = 'text-sm mt-1 text-green-600';
-            calcularEconomia();
-        } else {
-            statusEl.textContent = '❌ Cupom inválido';
-            statusEl.className = 'text-sm mt-1 text-red-600';
-        }
-    }
-
-    // Gerar resumo
-    function gerarResumo() {
-        const form = document.getElementById('propostaForm');
-        const formData = new FormData(form);
-        const tipoPessoa = formData.get('tipo_pessoa');
-        
-        let html = '';
-        
-        if (tipoPessoa === 'fisica') {
-            html += `<p><strong>Nome:</strong> ${formData.get('nome')} ${formData.get('sobrenome')}</p>`;
-            html += `<p><strong>CPF:</strong> ${formData.get('cpf')}</p>`;
-        } else {
-            html += `<p><strong>Empresa:</strong> ${formData.get('nome_fantasia')}</p>`;
-            html += `<p><strong>CNPJ:</strong> ${formData.get('cnpj')}</p>`;
-        }
-        
-        html += `<p><strong>Email:</strong> ${formData.get('email')}</p>`;
-        html += `<p><strong>Telefone:</strong> ${formData.get('telefone')}</p>`;
-        html += `<p><strong>Cidade:</strong> ${formData.get('cidade')} - ${formData.get('estado')}</p>`;
-        html += `<p><strong>Consumo:</strong> ${formData.get('consumo_kw')} kWh/mês</p>`;
-        html += `<p><strong>Economia Mensal:</strong> R$ ${formData.get('economia_mensal')}</p>`;
-        html += `<p><strong>Economia Anual:</strong> R$ ${formData.get('economia_anual')}</p>`;
-        
-        document.getElementById('resumoProposta').innerHTML = html;
-    }
-
-    // Upload de arquivo para Supabase Storage
-    async function uploadArquivo(file, bucket, path) {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'apikey': SUPABASE_KEY
-                },
-                body: formData
-            });
-            
-            if (response.ok) {
-                return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
-            } else {
-                throw new Error('Erro ao fazer upload');
-            }
-        } catch (error) {
-            console.error('Erro no upload:', error);
-            return null;
-        }
-    }
-
-    // Enviar formulário final
-    document.getElementById('propostaForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (!validarPasso(6)) return;
-        
-        const salvou = await salvarEtapa(6);
-        
-        if (salvou) {
-            localStorage.removeItem('proposta_em_andamento');
-            document.getElementById('modalSucesso').style.display = 'flex';
-        }
-    });
-</script>
+    </script>
+</body>
+</html>
