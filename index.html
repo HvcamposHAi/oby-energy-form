@@ -196,13 +196,30 @@
 
             const calcularSimulacao = async () => {
                 try {
+                    console.log('Iniciando cálculo da simulação...');
+                    console.log('Consumo KW:', formData.consumoKW);
+                    console.log('Tipo Conexão:', formData.tipoConexao);
+                    
                     const configResponse = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
                         headers: {
                             'apikey': SUPABASE_KEY,
                             'Authorization': `Bearer ${SUPABASE_KEY}`
                         }
                     });
+                    
+                    if (!configResponse.ok) {
+                        console.error('Erro ao buscar configurações');
+                        return;
+                    }
+                    
                     const configs = await configResponse.json();
+                    console.log('Configurações:', configs);
+                    
+                    if (!configs || configs.length === 0) {
+                        console.error('Nenhuma configuração encontrada');
+                        return;
+                    }
+                    
                     const config = configs[0];
                     
                     const tarifaKwh = config.tarifa_kwh;
@@ -212,6 +229,10 @@
                     
                     const consumo = parseFloat(formData.consumoKW);
                     const consumoMinimoKW = consumoMinimo[formData.tipoConexao];
+                    
+                    console.log('Tarifa kWh:', tarifaKwh);
+                    console.log('Consumo:', consumo);
+                    console.log('Consumo Mínimo KW:', consumoMinimoKW);
                     
                     const consumoMinimoValor = consumoMinimoKW * tarifaKwh;
                     const valorTotal = consumo * tarifaKwh;
@@ -228,7 +249,7 @@
                     const economiaAnual = economiaMensal * 12;
                     const contasPorAno = (12 - (economiaAnual / contaAtual)).toFixed(2);
                     
-                    setSimulacao({
+                    const simulacaoCalculada = {
                         desconto: (desconto * 100),
                         consumoMinimoValor,
                         impostosNaoCompensaveis: valorImpostos,
@@ -242,16 +263,25 @@
                         consumoKW: consumo,
                         consumoMinimoKW,
                         tipoConexao: formData.tipoConexao
-                    });
+                    };
+                    
+                    console.log('Simulação calculada:', simulacaoCalculada);
+                    setSimulacao(simulacaoCalculada);
                 } catch (error) {
                     console.error('Erro ao calcular simulação:', error);
+                    alert('Erro ao calcular a simulação. Por favor, tente novamente.');
                 }
             };
 
             const handleNext = async () => {
                 if (!validateStep()) return;
                 
-                if (step === 3) await calcularSimulacao();
+                if (step === 3) {
+                    setLoading(true);
+                    await calcularSimulacao();
+                    setLoading(false);
+                }
+                
                 if (step === 5) {
                     await handleSubmit();
                     return;
@@ -667,12 +697,13 @@
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* COLUNA ESQUERDA - COMPARAÇÃO DE CONTAS */}
+                                    {/* COLUNA ESQUERDA - COMPARAÇÃO E RESUMO */}
                                     <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                                        {/* CARDS LADO A LADO - CONTA ATUAL E COM OBY */}
+                                        <div className="grid grid-cols-2 gap-4 p-4 border-2 border-red-500 rounded-lg">
+                                            <div>
                                                 <h4 className="text-center font-bold text-blue-800 mb-3">Conta Atual</h4>
-                                                <div className="space-y-2 text-sm">
+                                                <div className="space-y-1 text-xs">
                                                     <div className="flex justify-between">
                                                         <span>Consumo Mínimo</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
@@ -685,16 +716,17 @@
                                                         <span>Energia Cativa</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
                                                     </div>
-                                                    <div className="border-t-2 border-blue-300 pt-2 flex justify-between font-bold text-base">
+                                                    <div className="border-t-2 border-gray-300 pt-1 mt-1"></div>
+                                                    <div className="flex justify-between font-bold text-sm">
                                                         <span>Total</span>
                                                         <span>R$ {formatBRL(simulacao.contaAtual)}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="bg-green-50 p-4 rounded-lg border-2 border-green-300">
+                                            <div>
                                                 <h4 className="text-center font-bold text-green-800 mb-3">Com a Oby</h4>
-                                                <div className="space-y-2 text-sm">
+                                                <div className="space-y-1 text-xs">
                                                     <div className="flex justify-between">
                                                         <span>Consumo Mínimo</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
@@ -707,10 +739,44 @@
                                                         <span>Energia Cativa</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
                                                     </div>
-                                                    <div className="border-t-2 border-green-400 pt-2 flex justify-between font-bold text-base text-green-700">
+                                                    <div className="border-t-2 border-gray-300 pt-1 mt-1"></div>
+                                                    <div className="flex justify-between font-bold text-sm text-green-700">
                                                         <span>Total</span>
                                                         <span>R$ {formatBRL(simulacao.contaNova)}</span>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* CARD SEU DESCONTO CONOSCO */}
+                                        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+                                            <h4 className="font-semibold text-blue-800 mb-3">Seu desconto conosco:</h4>
+                                            <div className="space-y-1 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span>Consumo Mínimo</span>
+                                                    <span className="text-right">R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Impostos Não Compensáveis</span>
+                                                    <span className="text-right">R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Energia Cativa</span>
+                                                    <span className="text-right">R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
+                                                </div>
+                                                <div className="border-t border-gray-400 my-1"></div>
+                                                <div className="flex justify-between font-semibold">
+                                                    <span></span>
+                                                    <span>R$ {formatBRL(simulacao.contaAtual)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-green-600 font-bold">
+                                                    <span>Desconto Oby na Energia (-{simulacao.desconto}%)</span>
+                                                    <span>(R$ {formatBRL(simulacao.economiaMensal)})</span>
+                                                </div>
+                                                <div className="border-t-2 border-gray-400 mt-1 pt-1"></div>
+                                                <div className="flex justify-between font-bold text-base text-green-700">
+                                                    <span></span>
+                                                    <span>R$ {formatBRL(simulacao.contaNova)}</span>
                                                 </div>
                                             </div>
                                         </div>
