@@ -111,6 +111,7 @@
                         cidade: data.localidade,
                         logradouro: data.logradouro || '',
                         bairro: data.bairro || '',
+                        complemento: data.complemento || ''
                     }));
                     
                     if (data.uf !== 'PR') {
@@ -127,345 +128,475 @@
                 }
             };
 
-            const validateStep = () => {
+            const validateStep = (currentStep) => {
                 const newErrors = {};
-                
-                if (step === 1) {
-                    if (!formData.cep) newErrors.cep = 'Campo obrigatório';
-                    if (!formData.nome) newErrors.nome = 'Campo obrigatório';
-                    if (!formData.sobrenome) newErrors.sobrenome = 'Campo obrigatório';
-                    if (!formData.email) newErrors.email = 'Campo obrigatório';
-                    if (!formData.telefone) newErrors.telefone = 'Campo obrigatório';
-                    if (!cepValidado) newErrors.cep = 'Valide o CEP antes de continuar';
+                if (currentStep === 1) {
+                    if (!formData.cep) newErrors.cep = 'CEP é obrigatório';
+                    if (!formData.nome) newErrors.nome = 'Nome é obrigatório';
+                    if (!formData.sobrenome) newErrors.sobrenome = 'Sobrenome é obrigatório';
+                    if (!formData.email) newErrors.email = 'Email é obrigatório';
+                    if (!formData.telefone) newErrors.telefone = 'Telefone é obrigatório';
                 }
-                
-                if (step === 2) {
-                    if (!formData.logradouro) newErrors.logradouro = 'Campo obrigatório';
-                    if (!formData.numeroEndereco) newErrors.numeroEndereco = 'Campo obrigatório';
-                    if (!formData.bairro) newErrors.bairro = 'Campo obrigatório';
+                if (currentStep === 2) {
+                    if (!formData.logradouro) newErrors.logradouro = 'Logradouro é obrigatório';
+                    if (!formData.numeroEndereco) newErrors.numeroEndereco = 'Número é obrigatório';
+                    if (!formData.bairro) newErrors.bairro = 'Bairro é obrigatório';
                 }
-                
-                if (step === 3) {
-                    if (!formData.modalidadeTarifaria) newErrors.modalidadeTarifaria = 'Campo obrigatório';
-                    if (!formData.distribuidoraEnergia) newErrors.distribuidoraEnergia = 'Campo obrigatório';
-                    if (!formData.tipoConexao) newErrors.tipoConexao = 'Campo obrigatório';
-                    if (!formData.consumoKW) newErrors.consumoKW = 'Campo obrigatório';
-                    if (!formData.numeroInstalacao) newErrors.numeroInstalacao = 'Campo obrigatório';
-                    
-                    const consumo = parseFloat(formData.consumoKW);
+                if (currentStep === 3) {
+                    if (!formData.modalidadeTarifaria) newErrors.modalidadeTarifaria = 'Modalidade tarifária é obrigatória';
+                    if (!formData.distribuidoraEnergia) newErrors.distribuidoraEnergia = 'Distribuidora é obrigatória';
+                    if (!formData.tipoConexao) newErrors.tipoConexao = 'Selecione o tipo de conexão';
+                    if (!formData.consumoKW) newErrors.consumoKW = 'Consumo é obrigatório';
                     const minimo = consumoMinimo[formData.tipoConexao];
-                    if (consumo < minimo) {
-                        newErrors.consumoKW = `Consumo mínimo para ${formData.tipoConexao}: ${minimo} kW`;
+                    if (formData.consumoKW && parseFloat(formData.consumoKW) < minimo) {
+                        newErrors.consumoKW = `Consumo mínimo para ${formData.tipoConexao} é ${minimo} kW`;
                     }
+                    if (!formData.numeroInstalacao) newErrors.numeroInstalacao = 'Número da instalação é obrigatório';
                 }
-                
-                if (step === 5) {
+                if (currentStep === 5) {
                     if (formData.tipoPessoa === 'fisica') {
-                        if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
-                        if (!formData.rg) newErrors.rg = 'Campo obrigatório';
-                        if (!formData.arquivoRGFrente) newErrors.arquivoRGFrente = 'Campo obrigatório';
-                        if (!formData.arquivoRGVerso) newErrors.arquivoRGVerso = 'Campo obrigatório';
+                        if (!formData.cpf) newErrors.cpf = 'CPF é obrigatório';
+                        if (!formData.rg) newErrors.rg = 'RG é obrigatório';
+                        if (!formData.arquivoRGFrente) newErrors.arquivoRGFrente = 'RG/CNH frente é obrigatório';
+                        if (!formData.arquivoRGVerso) newErrors.arquivoRGVerso = 'RG/CNH verso é obrigatório';
                     } else {
-                        if (!formData.cnpj) newErrors.cnpj = 'Campo obrigatório';
-                        if (!formData.nomeFantasia) newErrors.nomeFantasia = 'Campo obrigatório';
-                        if (!formData.razaoSocial) newErrors.razaoSocial = 'Campo obrigatório';
-                        if (!formData.representanteLegal1) newErrors.representanteLegal1 = 'Campo obrigatório';
-                        if (!formData.cpfRepresentante1) newErrors.cpfRepresentante1 = 'Campo obrigatório';
-                        if (!formData.rgRepresentante1) newErrors.rgRepresentante1 = 'Campo obrigatório';
-                        if (!formData.arquivoRGRep1Frente) newErrors.arquivoRGRep1Frente = 'Campo obrigatório';
-                        if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'Campo obrigatório';
-                        if (!formData.contratoSocial) newErrors.contratoSocial = 'Campo obrigatório';
+                        if (!formData.cnpj) newErrors.cnpj = 'CNPJ é obrigatório';
+                        if (!formData.nomeFantasia) newErrors.nomeFantasia = 'Nome Fantasia é obrigatório';
+                        if (!formData.razaoSocial) newErrors.razaoSocial = 'Razão Social é obrigatória';
+                        if (!formData.representanteLegal1) newErrors.representanteLegal1 = 'Representante Legal é obrigatório';
+                        if (!formData.cpfRepresentante1) newErrors.cpfRepresentante1 = 'CPF do Representante é obrigatório';
+                        if (!formData.rgRepresentante1) newErrors.rgRepresentante1 = 'RG do Representante é obrigatório';
+                        if (!formData.arquivoRGRep1Frente) newErrors.arquivoRGRep1Frente = 'RG/CPF frente do Representante é obrigatório';
+                        if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'RG/CPF verso do Representante é obrigatório';
+                        if (!formData.contratoSocial) newErrors.contratoSocial = 'Documento da empresa é obrigatório';
                     }
-                    
                     if (formData.temResponsavelPagamento) {
-                        if (!formData.nomeResponsavelPagamento) newErrors.nomeResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.cpfResponsavelPagamento) newErrors.cpfResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.rgResponsavelPagamento) newErrors.rgResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.arquivoRGRespPagFrente) newErrors.arquivoRGRespPagFrente = 'Campo obrigatório';
-                        if (!formData.arquivoRGRespPagVerso) newErrors.arquivoRGRespPagVerso = 'Campo obrigatório';
+                        if (!formData.nomeResponsavelPagamento) newErrors.nomeResponsavelPagamento = 'Nome do responsável é obrigatório';
+                        if (!formData.cpfResponsavelPagamento) newErrors.cpfResponsavelPagamento = 'CPF do responsável é obrigatório';
+                        if (!formData.rgResponsavelPagamento) newErrors.rgResponsavelPagamento = 'RG do responsável é obrigatório';
+                        if (!formData.arquivoRGRespPagFrente) newErrors.arquivoRGRespPagFrente = 'RG frente é obrigatório';
+                        if (!formData.arquivoRGRespPagVerso) newErrors.arquivoRGRespPagVerso = 'RG verso é obrigatório';
                     }
-                    
-                    if (!formData.arquivoConta) newErrors.arquivoConta = 'Campo obrigatório';
-                    if (!formData.aceiteTermoAdesao) newErrors.aceiteTermoAdesao = 'Você deve aceitar este termo';
-                    if (!formData.aceiteDadosPessoais) newErrors.aceiteDadosPessoais = 'Você deve aceitar este termo';
+                    if (!formData.arquivoConta) newErrors.arquivoConta = 'Conta de energia é obrigatória';
+                    if (!formData.aceiteTermoAdesao) newErrors.aceiteTermoAdesao = 'Aceite obrigatório';
+                    if (!formData.aceiteDadosPessoais) newErrors.aceiteDadosPessoais = 'Aceite obrigatório';
                 }
-                
                 setErrors(newErrors);
                 return Object.keys(newErrors).length === 0;
             };
 
             const calcularSimulacao = async () => {
+                // Buscar configurações do banco de dados
+                let tarifaTotal = 0.842355;
+                let proporcaoEnergia = 0.81;
+                let proporcaoImpostos = 0.19;
+                
                 try {
-                    console.log('Iniciando cálculo da simulação...');
-                    console.log('Consumo KW:', formData.consumoKW);
-                    console.log('Tipo Conexão:', formData.tipoConexao);
-                    
-                    const configResponse = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
                         headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY
                         }
                     });
+                    const configs = await response.json();
                     
-                    if (!configResponse.ok) {
-                        console.error('Erro ao buscar configurações');
-                        return;
-                    }
-                    
-                    const configs = await configResponse.json();
-                    console.log('Configurações:', configs);
-                    
-                    if (!configs || configs.length === 0) {
-                        console.error('Nenhuma configuração encontrada');
-                        return;
-                    }
-                    
-                    const config = configs[0];
-                    
-                    const tarifaKwh = config.tarifa_kwh;
-                    const proporcaoEnergia = config.proporcao_energia;
-                    const proporcaoImpostos = config.proporcao_impostos;
-                    const desconto = formData.cupom ? 0.20 : 0.15;
-                    
-                    const consumo = parseFloat(formData.consumoKW);
-                    const consumoMinimoKW = consumoMinimo[formData.tipoConexao];
-                    
-                    console.log('Tarifa kWh:', tarifaKwh);
-                    console.log('Consumo:', consumo);
-                    console.log('Consumo Mínimo KW:', consumoMinimoKW);
-                    
-                    const consumoMinimoValor = consumoMinimoKW * tarifaKwh;
-                    const valorTotal = consumo * tarifaKwh;
-                    const valorEnergia = valorTotal * proporcaoEnergia;
-                    const valorImpostos = valorTotal * proporcaoImpostos;
-                    
-                    const energiaCativaAtual = valorEnergia;
-                    const energiaCativaComDesconto = valorEnergia * (1 - desconto);
-                    const economiaMensal = energiaCativaAtual - energiaCativaComDesconto;
-                    
-                    const contaAtual = consumoMinimoValor + valorImpostos + energiaCativaAtual;
-                    const contaNova = consumoMinimoValor + valorImpostos + energiaCativaComDesconto;
-                    
-                    const economiaAnual = economiaMensal * 12;
-                    const contasPorAno = (12 - (economiaAnual / contaAtual)).toFixed(2);
-                    
-                    const simulacaoCalculada = {
-                        desconto: (desconto * 100),
-                        consumoMinimoValor,
-                        impostosNaoCompensaveis: valorImpostos,
-                        energiaCativaAtual,
-                        energiaCativaComDesconto,
-                        contaAtual,
-                        contaNova,
-                        economiaMensal,
-                        economiaAnual,
-                        contasPorAno,
-                        consumoKW: consumo,
-                        consumoMinimoKW,
-                        tipoConexao: formData.tipoConexao
-                    };
-                    
-                    console.log('Simulação calculada:', simulacaoCalculada);
-                    setSimulacao(simulacaoCalculada);
+                    configs.forEach(config => {
+                        if (config.chave === 'tarifa_kwh') tarifaTotal = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_energia') proporcaoEnergia = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_impostos') proporcaoImpostos = parseFloat(config.valor);
+                    });
                 } catch (error) {
-                    console.error('Erro ao calcular simulação:', error);
-                    alert('Erro ao calcular a simulação. Por favor, tente novamente.');
+                    console.log('Usando valores padrão');
                 }
+
+                const consumo = parseFloat(formData.consumoKW);
+                const minimo = consumoMinimo[formData.tipoConexao];
+                const desconto = formData.cupom ? 0.20 : 0.15;
+                
+                const tarifaEnergia = tarifaTotal * proporcaoEnergia;
+                const tarifaImpostos = tarifaTotal * proporcaoImpostos;
+                
+                const consumoMinimoValor = minimo * tarifaTotal;
+                const consumoExcedente = consumo - minimo;
+                const impostosNaoCompensaveis = consumoExcedente * tarifaImpostos;
+                
+                const energiaCativaAtual = consumoExcedente * tarifaEnergia;
+                const contaAtual = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaAtual;
+                
+                const tarifaEnergiaComDesconto = tarifaEnergia * (1 - desconto);
+                const energiaCativaComDesconto = consumoExcedente * tarifaEnergiaComDesconto;
+                const contaNova = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaComDesconto;
+                
+                const economiaMensal = contaAtual - contaNova;
+                const economiaAnual = economiaMensal * 12;
+                const contasPorAno = 12 - (economiaAnual / contaAtual);
+                
+                setSimulacao({
+                    contaAtual: contaAtual.toFixed(2),
+                    contaNova: contaNova.toFixed(2),
+                    economiaMensal: economiaMensal.toFixed(2),
+                    economiaAnual: economiaAnual.toFixed(2),
+                    desconto: (desconto * 100).toFixed(0),
+                    consumo,
+                    minimo,
+                    consumoMinimoValor: consumoMinimoValor.toFixed(2),
+                    impostosNaoCompensaveis: impostosNaoCompensaveis.toFixed(2),
+                    energiaCativaAtual: energiaCativaAtual.toFixed(2),
+                    energiaCativaComDesconto: energiaCativaComDesconto.toFixed(2),
+                    contasPorAno: contasPorAno.toFixed(2)
+                });
             };
 
-            const handleNext = async () => {
-                if (!validateStep()) return;
-                
-                if (step === 3) {
-                    setLoading(true);
-                    await calcularSimulacao();
-                    setLoading(false);
-                }
-                
-                if (step === 5) {
-                    await handleSubmit();
-                    return;
-                }
-                
-                setStep(step + 1);
-            };
-
-            const uploadFile = async (file, folder) => {
-                const fileName = `${Date.now()}_${file.name}`;
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                const response = await fetch(
-                    `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
-                    {
+            const uploadArquivo = async (file) => {
+                if (!file) return null;
+                try {
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/documentos/${fileName}`, {
                         method: 'POST',
                         headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
                             'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                            'Content-Type': file.type
                         },
                         body: file
-                    }
-                );
-                
-                if (!response.ok) throw new Error('Erro no upload');
-                
-                return `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
+                    });
+                    if (!response.ok) return null;
+                    return `${SUPABASE_URL}/storage/v1/object/public/documentos/${fileName}`;
+                } catch (error) {
+                    return null;
+                }
             };
 
-            const handleSubmit = async () => {
+            const salvarProposta = async () => {
                 setLoading(true);
                 try {
-                    const arquivoContaUrl = formData.arquivoConta ? await uploadFile(formData.arquivoConta, 'contas-energia') : null;
-                    const arquivoRGFrenteUrl = formData.arquivoRGFrente ? await uploadFile(formData.arquivoRGFrente, 'documentos') : null;
-                    const arquivoRGVersoUrl = formData.arquivoRGVerso ? await uploadFile(formData.arquivoRGVerso, 'documentos') : null;
-                    const arquivoRGRep1FrenteUrl = formData.arquivoRGRep1Frente ? await uploadFile(formData.arquivoRGRep1Frente, 'documentos') : null;
-                    const arquivoRGRep1VersoUrl = formData.arquivoRGRep1Verso ? await uploadFile(formData.arquivoRGRep1Verso, 'documentos') : null;
-                    const arquivoRGRespPagFrenteUrl = formData.arquivoRGRespPagFrente ? await uploadFile(formData.arquivoRGRespPagFrente, 'documentos') : null;
-                    const arquivoRGRespPagVersoUrl = formData.arquivoRGRespPagVerso ? await uploadFile(formData.arquivoRGRespPagVerso, 'documentos') : null;
-                    const contratoSocialUrl = formData.contratoSocial ? await uploadFile(formData.contratoSocial, 'documentos') : null;
+                    const urlContaEnergia = await uploadArquivo(formData.arquivoConta);
+                    const urlRGFrente = await uploadArquivo(formData.arquivoRGFrente);
+                    const urlRGVerso = await uploadArquivo(formData.arquivoRGVerso);
+                    const urlContratoSocial = await uploadArquivo(formData.contratoSocial);
+                    const urlRGRep1Frente = await uploadArquivo(formData.arquivoRGRep1Frente);
+                    const urlRGRep1Verso = await uploadArquivo(formData.arquivoRGRep1Verso);
+                    const urlRGRep2Frente = await uploadArquivo(formData.arquivoRGRep2Frente);
+                    const urlRGRep2Verso = await uploadArquivo(formData.arquivoRGRep2Verso);
+                    const urlRGRespPagFrente = await uploadArquivo(formData.arquivoRGRespPagFrente);
+                    const urlRGRespPagVerso = await uploadArquivo(formData.arquivoRGRespPagVerso);
                     
-                    const proposta = {
-                        nome_completo: `${formData.nome} ${formData.sobrenome}`,
-                        email: formData.email,
-                        telefone: formData.telefone,
+                    const propostaData = {
+                        nome: formData.nome,
+                        sobrenome: formData.sobrenome,
                         cep: formData.cep,
+                        estado: formData.estado,
+                        cidade: formData.cidade,
                         logradouro: formData.logradouro,
                         numero_endereco: formData.numeroEndereco,
-                        complemento: formData.complemento,
+                        complemento: formData.complemento || null,
                         bairro: formData.bairro,
-                        cidade: formData.cidade,
-                        estado: formData.estado,
+                        cupom: formData.cupom || null,
                         modalidade_tarifaria: formData.modalidadeTarifaria,
                         distribuidora_energia: formData.distribuidoraEnergia,
+                        logradouro_instalacao: formData.logradouroInstalacao || null,
+                        numero_instalacao_endereco: formData.numeroInstalacaoEndereco || null,
+                        complemento_instalacao: formData.complementoInstalacao || null,
+                        bairro_instalacao: formData.bairroInstalacao || null,
+                        cidade_instalacao: formData.cidadeInstalacao || null,
+                        estado_instalacao: formData.estadoInstalacao || null,
                         tipo_conexao: formData.tipoConexao,
-                        consumo_kw: parseFloat(formData.consumoKW),
+                        consumo_kw: parseInt(formData.consumoKW),
                         numero_instalacao: formData.numeroInstalacao,
+                        numero_cliente: formData.numeroCliente || null,
                         tipo_pessoa: formData.tipoPessoa,
-                        cpf: formData.cpf,
-                        rg: formData.rg,
-                        cnpj: formData.cnpj,
-                        nome_fantasia: formData.nomeFantasia,
-                        razao_social: formData.razaoSocial,
-                        representante_legal_1: formData.representanteLegal1,
-                        cpf_representante_1: formData.cpfRepresentante1,
-                        rg_representante_1: formData.rgRepresentante1,
+                        cpf: formData.cpf || null,
+                        rg: formData.rg || null,
+                        cnpj: formData.cnpj || null,
+                        nome_fantasia: formData.nomeFantasia || null,
+                        razao_social: formData.razaoSocial || null,
+                        representante_legal_1: formData.representanteLegal1 || null,
+                        cpf_representante_1: formData.cpfRepresentante1 || null,
+                        rg_representante_1: formData.rgRepresentante1 || null,
+                        representante_legal_2: formData.representanteLegal2 || null,
+                        cpf_representante_2: formData.cpfRepresentante2 || null,
+                        rg_representante_2: formData.rgRepresentante2 || null,
+                        email: formData.email,
+                        telefone: formData.telefone,
+                        url_conta_energia: urlContaEnergia,
+                        url_rg_frente: urlRGFrente,
+                        url_rg_verso: urlRGVerso,
+                        url_contrato_social: urlContratoSocial,
+                        url_rg_rep_1_frente: urlRGRep1Frente,
+                        url_rg_rep_1_verso: urlRGRep1Verso,
+                        url_rg_rep_2_frente: urlRGRep2Frente,
+                        url_rg_rep_2_verso: urlRGRep2Verso,
                         tem_responsavel_pagamento: formData.temResponsavelPagamento,
-                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento,
-                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento,
-                        rg_responsavel_pagamento: formData.rgResponsavelPagamento,
-                        arquivo_conta_url: arquivoContaUrl,
-                        arquivo_rg_frente_url: arquivoRGFrenteUrl,
-                        arquivo_rg_verso_url: arquivoRGVersoUrl,
-                        arquivo_rg_rep1_frente_url: arquivoRGRep1FrenteUrl,
-                        arquivo_rg_rep1_verso_url: arquivoRGRep1VersoUrl,
-                        arquivo_rg_resp_pag_frente_url: arquivoRGRespPagFrenteUrl,
-                        arquivo_rg_resp_pag_verso_url: arquivoRGRespPagVersoUrl,
-                        contrato_social_url: contratoSocialUrl,
-                        simulacao_economia_mensal: simulacao.economiaMensal,
-                        simulacao_economia_anual: simulacao.economiaAnual,
-                        simulacao_conta_atual: simulacao.contaAtual,
-                        simulacao_conta_nova: simulacao.contaNova,
-                        desconto_aplicado: simulacao.desconto,
-                        cupom_desconto: formData.cupom,
+                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento || null,
+                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento || null,
+                        rg_responsavel_pagamento: formData.rgResponsavelPagamento || null,
+                        url_rg_resp_pag_frente: urlRGRespPagFrente,
+                        url_rg_resp_pag_verso: urlRGRespPagVerso,
                         aceite_termo_adesao: formData.aceiteTermoAdesao,
                         aceite_dados_pessoais: formData.aceiteDadosPessoais,
-                        status: 'pendente'
+                        consumo_minimo_valor: parseFloat(simulacao.consumoMinimoValor),
+                        impostos_nao_compensaveis: parseFloat(simulacao.impostosNaoCompensaveis),
+                        energia_cativa_atual: parseFloat(simulacao.energiaCativaAtual),
+                        energia_cativa_com_desconto: parseFloat(simulacao.energiaCativaComDesconto),
+                        conta_atual: parseFloat(simulacao.contaAtual),
+                        conta_nova: parseFloat(simulacao.contaNova),
+                        contas_por_ano: parseFloat(simulacao.contasPorAno),
+                        economia_mensal: parseFloat(simulacao.economiaMensal),
+                        economia_anual: parseFloat(simulacao.economiaAnual),
+                        desconto: parseInt(simulacao.desconto),
+                        status: estadoForaCobertura ? 'lista_espera' : 'pendente'
                     };
                     
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
                         method: 'POST',
                         headers: {
-                            'apikey': SUPABASE_KEY,
                             'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY,
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
-                        body: JSON.stringify(proposta)
+                        body: JSON.stringify(propostaData)
                     });
                     
-                    if (!response.ok) throw new Error('Erro ao salvar proposta');
-                    
-                    const result = await response.json();
-                    setPropostaId(result[0].id);
-                    setMostrarRevisao(true);
+                    if (!response.ok) throw new Error('Erro ao salvar');
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        setPropostaId(data[0].id);
+                        setMostrarRevisao(false);
+                        setMostrarMinuta(true);
+                    }
                 } catch (error) {
-                    console.error('Erro:', error);
-                    alert('Erro ao enviar proposta. Tente novamente.');
+                    console.error('Erro detalhado:', error);
+                    alert('Erro ao salvar proposta. Tente novamente.');
                 } finally {
                     setLoading(false);
                 }
             };
 
+            const handleNext = async () => {
+                if (step === 1) {
+                    const cepValido = await validateCEP();
+                    if (!cepValido) return;
+                }
+                if (validateStep(step)) {
+                    if (step === 3) await calcularSimulacao();
+                    if (step === 5) {
+                        setMostrarRevisao(true);
+                        return;
+                    }
+                    setStep(step + 1);
+                }
+            };
+
             if (mostrarRevisao) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
+                        <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-2xl">
+                            <div className="text-center mb-8">
+                                <div className="flex justify-center mb-6">
+                                    <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto" />
+                                </div>
+                                <h2 className="text-2xl font-bold">Revisão dos Dados</h2>
+                                <p className="text-sm text-gray-600 mt-2">Confirme todas as informações antes de finalizar</p>
+                            </div>
+                            
+                            <div className="space-y-6">
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Dados Pessoais</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Nome:</strong> {formData.nome} {formData.sobrenome}</p>
+                                        <p><strong>Email:</strong> {formData.email}</p>
+                                        <p><strong>Telefone:</strong> {formData.telefone}</p>
+                                        <p><strong>CEP:</strong> {formData.cep}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-indigo-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Endereço</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Logradouro:</strong> {formData.logradouro}</p>
+                                        <p><strong>Número:</strong> {formData.numeroEndereco}</p>
+                                        <p><strong>Complemento:</strong> {formData.complemento || 'N/A'}</p>
+                                        <p><strong>Bairro:</strong> {formData.bairro}</p>
+                                        <p><strong>Cidade:</strong> {formData.cidade} - {formData.estado}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-green-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Dados da Instalação</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Modalidade:</strong> {formData.modalidadeTarifaria}</p>
+                                        <p><strong>Distribuidora:</strong> {formData.distribuidoraEnergia}</p>
+                                        <p><strong>Tipo:</strong> {formData.tipoConexao}</p>
+                                        <p><strong>Consumo:</strong> {formData.consumoKW} kW</p>
+                                        <p><strong>Nº Instalação:</strong> {formData.numeroInstalacao}</p>
+                                        {formData.numeroCliente && <p><strong>Nº Cliente:</strong> {formData.numeroCliente}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="bg-purple-50 p-4 rounded-lg">
+                                    <h3 className="font-bold mb-3">Economia Estimada</h3>
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <p><strong>Economia Mensal:</strong> R$ {formatBRL(simulacao.economiaMensal)}</p>
+                                        <p><strong>Economia Anual:</strong> R$ {formatBRL(simulacao.economiaAnual)}</p>
+                                        <p><strong>Desconto:</strong> {simulacao.desconto}%</p>
+                                        <p><strong>Contas/Ano:</strong> {simulacao.contasPorAno}</p>
+                                    </div>
+                                </div>
+
+                                {formData.tipoPessoa === 'fisica' ? (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <h3 className="font-bold mb-3">Documentos - Pessoa Física</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <p><strong>CPF:</strong> {formData.cpf}</p>
+                                            <p><strong>RG:</strong> {formData.rg}</p>
+                                            <p><strong>RG/CNH Frente:</strong> {formData.arquivoRGFrente?.name}</p>
+                                            <p><strong>RG/CNH Verso:</strong> {formData.arquivoRGVerso?.name}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <h3 className="font-bold mb-3">Documentos - Pessoa Jurídica</h3>
+                                        <div className="space-y-2 text-sm">
+                                            <p><strong>CNPJ:</strong> {formData.cnpj}</p>
+                                            <p><strong>Nome Fantasia:</strong> {formData.nomeFantasia}</p>
+                                            <p><strong>Razão Social:</strong> {formData.razaoSocial}</p>
+                                            <p><strong>Representante 1:</strong> {formData.representanteLegal1}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {formData.temResponsavelPagamento && (
+                                    <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+                                        <h3 className="font-bold mb-3">Responsável pelo Pagamento</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <p><strong>Nome:</strong> {formData.nomeResponsavelPagamento}</p>
+                                            <p><strong>CPF:</strong> {formData.cpfResponsavelPagamento}</p>
+                                            <p><strong>RG:</strong> {formData.rgResponsavelPagamento}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-8 flex gap-4 justify-center">
+                                <button onClick={() => setMostrarRevisao(false)} className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300">
+                                    Voltar e Editar
+                                </button>
+                                <button onClick={salvarProposta} disabled={loading} className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
+                                    {loading ? 'Salvando...' : 'Confirmar e Contratar'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (mostrarMinuta) {
                 const dataAtual = new Date().toLocaleDateString('pt-BR');
+                const desconto = formData.cupom ? '20%' : '15%';
+                const nomeCompleto = formData.tipoPessoa === 'fisica' 
+                    ? `${formData.nome} ${formData.sobrenome}`.toUpperCase()
+                    : formData.nomeFantasia.toUpperCase();
                 
                 return (
-                    <div className="min-h-screen bg-white p-8">
-                        <div className="max-w-4xl mx-auto">
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
+                        <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-2xl">
                             <div className="text-center mb-8">
-                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-24 w-auto mx-auto mb-4" />
-                                <h1 className="text-3xl font-bold text-green-600">✅ Proposta Enviada com Sucesso!</h1>
-                                <p className="text-gray-600 mt-2">Sua proposta foi registrada e será analisada em breve.</p>
-                            </div>
-
-                            <div className="bg-gradient-to-r from-green-100 to-blue-100 p-8 rounded-xl mb-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Economia Mensal</p>
-                                        <p className="text-3xl font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Economia Anual</p>
-                                        <p className="text-3xl font-bold text-blue-600">R$ {formatBRL(simulacao.economiaAnual)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Desconto</p>
-                                        <p className="text-3xl font-bold text-purple-600">{simulacao.desconto}%</p>
+                                <div className="flex justify-center mb-4">
+                                    <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto" />
+                                </div>
+                                <div className="mb-4">
+                                    <div className="inline-block p-4 bg-green-100 rounded-full">
+                                        <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
                                     </div>
                                 </div>
+                                <h2 className="text-3xl font-bold text-green-600 mb-2">Dados Enviados com Sucesso!</h2>
+                                <p className="text-lg text-gray-700">Aguarde que nossos especialistas entrarão em contato</p>
+                                <p className="text-sm text-gray-500 mt-2">Proposta ID: {propostaId}</p>
                             </div>
 
-                            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
-                                <h2 className="text-2xl font-bold mb-6 text-center border-b pb-4">Resumo da Proposta</h2>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-3 text-blue-600">Dados Pessoais</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <p><strong>Nome:</strong> {formData.nome} {formData.sobrenome}</p>
-                                            <p><strong>Email:</strong> {formData.email}</p>
-                                            <p><strong>Telefone:</strong> {formData.telefone}</p>
-                                            <p><strong>Tipo:</strong> {formData.tipoPessoa === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'}</p>
-                                            {formData.tipoPessoa === 'fisica' ? (
-                                                <p><strong>CPF:</strong> {formData.cpf}</p>
-                                            ) : (
-                                                <p><strong>CNPJ:</strong> {formData.cnpj}</p>
-                                            )}
+                            <div className="bg-blue-50 p-6 rounded-lg mb-6">
+                                <h3 className="font-bold text-lg mb-4 text-center">Resumo da sua Proposta</h3>
+                                <div className="space-y-3 text-sm">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-gray-600">Contratante</p>
+                                            <p className="font-bold">{nomeCompleto}</p>
                                         </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-3 text-green-600">Dados da Instalação</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <p><strong>Tipo de Conexão:</strong> {formData.tipoConexao}</p>
-                                            <p><strong>Consumo:</strong> {formData.consumoKW} kW</p>
-                                            <p><strong>Nº Instalação:</strong> {formData.numeroInstalacao}</p>
-                                            <p><strong>Modalidade:</strong> {formData.modalidadeTarifaria}</p>
-                                            <p><strong>Distribuidora:</strong> {formData.distribuidoraEnergia}</p>
+                                        <div>
+                                            <p className="text-gray-600">Email</p>
+                                            <p className="font-bold">{formData.email}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Endereço</p>
+                                            <p className="font-bold">{formData.logradouro}, {formData.numeroEndereco}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Localização</p>
+                                            <p className="font-bold">{formData.cidade} - {formData.estado}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Tipo de Conexão</p>
+                                            <p className="font-bold">{formData.tipoConexao}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Consumo Mensal</p>
+                                            <p className="font-bold">{formData.consumoKW} kW</p>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="mt-6 pt-6 border-t">
-                                    <h3 className="font-bold text-lg mb-3 text-purple-600">Endereço</h3>
-                                    <p className="text-sm">{formData.logradouro}, {formData.numeroEndereco} {formData.complemento && `- ${formData.complemento}`}</p>
-                                    <p className="text-sm">{formData.bairro} - {formData.cidade}/{formData.estado}</p>
-                                    <p className="text-sm">CEP: {formData.cep}</p>
+                            <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-6 rounded-lg mb-6">
+                                <h3 className="font-bold text-lg mb-3 text-center">Sua Economia Estimada</h3>
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <p className="text-sm opacity-90">Economia Mensal</p>
+                                        <p className="text-2xl font-bold">R$ {formatBRL(simulacao.economiaMensal)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm opacity-90">Economia Anual</p>
+                                        <p className="text-2xl font-bold">R$ {formatBRL(simulacao.economiaAnual)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm opacity-90">Desconto</p>
+                                        <p className="text-2xl font-bold">{desconto}</p>
+                                    </div>
                                 </div>
+                            </div>
+                            
+                            {estadoForaCobertura ? (
+                                <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400 mb-6">
+                                    <p className="text-sm font-semibold text-center text-yellow-800">⏳ Você foi adicionado à lista de espera</p>
+                                    <p className="text-xs text-center text-yellow-700 mt-2">
+                                        Atualmente atendemos apenas o Paraná. Entraremos em contato quando houver disponibilidade em {formData.estado}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-400 mb-6">
+                                    <p className="text-sm font-semibold text-center text-green-800">✅ Sua região está em nossa área de cobertura!</p>
+                                    <p className="text-xs text-center text-green-700 mt-2">Nossa equipe entrará em contato em até 24 horas úteis</p>
+                                </div>
+                            )}
 
-                                <div className="mt-6 pt-6 border-t">
-                                    <div className="bg-green-50 p-6 rounded-lg text-center">
-                                        <p className="text-lg font-bold text-green-800 mb-2">🎉 Parabéns pela escolha sustentável!</p>
+                            <div className="border-t pt-6">
+                                <h3 className="font-bold text-center mb-4">Próximos Passos</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-2xl mb-2">📧</div>
+                                        <p className="font-bold">1. Confirmação por Email</p>
+                                        <p className="text-gray-600 text-xs mt-1">Você receberá um email com os detalhes da proposta</p>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-2xl mb-2">📞</div>
+                                        <p className="font-bold">2. Contato do Especialista</p>
+                                        <p className="text-gray-600 text-xs mt-1">Nossa equipe entrará em contato para finalizar</p>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-2xl mb-2">⚡</div>
+                                        <p className="font-bold">3. Início da Economia</p>
                                         <p className="text-gray-600 text-xs mt-1">Comece a economizar na sua conta de luz</p>
                                     </div>
                                 </div>
@@ -689,21 +820,18 @@
 
                         {step === 4 && simulacao && (
                             <div className="space-y-6">
-                                {/* CARD PRINCIPAL DE ECONOMIA */}
-                                <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center shadow-lg">
-                                    <h3 className="text-xl font-semibold mb-3">Sua Economia Mensal com Energia</h3>
-                                    <p className="text-6xl font-bold mb-3">R$ {formatBRL(simulacao.economiaMensal)}</p>
-                                    <p className="text-lg">Desconto de até {simulacao.desconto}% *</p>
-                                </div>
-
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* COLUNA ESQUERDA - COMPARAÇÃO E RESUMO */}
                                     <div className="space-y-4">
-                                        {/* CARDS LADO A LADO - CONTA ATUAL E COM OBY */}
-                                        <div className="grid grid-cols-2 gap-4 p-4 border-2 border-red-500 rounded-lg">
-                                            <div>
+                                        <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-6 rounded-xl text-center">
+                                            <h3 className="text-lg font-semibold mb-2">Sua Economia Mensal com Energia</h3>
+                                            <p className="text-5xl font-bold mb-2">R$ {formatBRL(simulacao.economiaMensal)}</p>
+                                            <p className="text-sm">Desconto de até {simulacao.desconto}% *</p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
                                                 <h4 className="text-center font-bold text-blue-800 mb-3">Conta Atual</h4>
-                                                <div className="space-y-1 text-xs">
+                                                <div className="space-y-2 text-sm">
                                                     <div className="flex justify-between">
                                                         <span>Consumo Mínimo</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
@@ -716,17 +844,16 @@
                                                         <span>Energia Cativa</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
                                                     </div>
-                                                    <div className="border-t-2 border-gray-300 pt-1 mt-1"></div>
-                                                    <div className="flex justify-between font-bold text-sm">
+                                                    <div className="border-t-2 border-blue-300 pt-2 flex justify-between font-bold text-base">
                                                         <span>Total</span>
                                                         <span>R$ {formatBRL(simulacao.contaAtual)}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div>
+                                            <div className="bg-green-50 p-4 rounded-lg border-2 border-green-300">
                                                 <h4 className="text-center font-bold text-green-800 mb-3">Com a Oby</h4>
-                                                <div className="space-y-1 text-xs">
+                                                <div className="space-y-2 text-sm">
                                                     <div className="flex justify-between">
                                                         <span>Consumo Mínimo</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
@@ -739,44 +866,10 @@
                                                         <span>Energia Cativa</span>
                                                         <span className="font-semibold">R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
                                                     </div>
-                                                    <div className="border-t-2 border-gray-300 pt-1 mt-1"></div>
-                                                    <div className="flex justify-between font-bold text-sm text-green-700">
+                                                    <div className="border-t-2 border-green-400 pt-2 flex justify-between font-bold text-base text-green-700">
                                                         <span>Total</span>
                                                         <span>R$ {formatBRL(simulacao.contaNova)}</span>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* CARD SEU DESCONTO CONOSCO */}
-                                        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-                                            <h4 className="font-semibold text-blue-800 mb-3">Seu desconto conosco:</h4>
-                                            <div className="space-y-1 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span>Consumo Mínimo</span>
-                                                    <span className="text-right">R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Impostos Não Compensáveis</span>
-                                                    <span className="text-right">R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Energia Cativa</span>
-                                                    <span className="text-right">R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                                </div>
-                                                <div className="border-t border-gray-400 my-1"></div>
-                                                <div className="flex justify-between font-semibold">
-                                                    <span></span>
-                                                    <span>R$ {formatBRL(simulacao.contaAtual)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-green-600 font-bold">
-                                                    <span>Desconto Oby na Energia (-{simulacao.desconto}%)</span>
-                                                    <span>(R$ {formatBRL(simulacao.economiaMensal)})</span>
-                                                </div>
-                                                <div className="border-t-2 border-gray-400 mt-1 pt-1"></div>
-                                                <div className="flex justify-between font-bold text-base text-green-700">
-                                                    <span></span>
-                                                    <span>R$ {formatBRL(simulacao.contaNova)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -788,8 +881,8 @@
                                             </p>
                                         </div>
 
-                                        <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
-                                            <p className="text-xs text-yellow-800">
+                                        <div className="bg-gray-50 p-3 rounded-lg">
+                                            <p className="text-xs text-gray-600">
                                                 * Desconto teto que variará de acordo com o tipo de conexão (mono, bi ou trifásica) 
                                                 e as variações de eventuais tarifas especiais, tais como as bandeiras tarifárias 
                                                 verde, amarela ou vermelha.
@@ -797,68 +890,64 @@
                                         </div>
                                     </div>
 
-                                    {/* COLUNA DIREITA - DADOS DE ENTRADA DO CADASTRO */}
                                     <div className="space-y-4">
-                                        <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow">
+                                        <div className="bg-white p-6 rounded-lg border-2 border-gray-300">
                                             <h3 className="text-xl font-bold mb-6 text-center border-b-2 border-gray-300 pb-3">
                                                 Dados de Entrada do Cadastro
                                             </h3>
 
                                             <div className="mb-6">
                                                 <h4 className="font-bold text-lg mb-3">Base do Consumo Mínimo:</h4>
-                                                <div className="bg-gray-50 rounded-lg p-4">
-                                                    <table className="w-full text-sm">
-                                                        <thead>
-                                                            <tr className="border-b-2 border-gray-300">
-                                                                <th className="text-left py-2 font-bold">Conexão</th>
-                                                                <th className="text-right py-2 font-bold">Consumo Mínimo kWh</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-gray-200">
-                                                            <tr>
-                                                                <td className="py-2">Monofásica</td>
-                                                                <td className="text-right py-2 font-semibold">30</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td className="py-2">Bifásica</td>
-                                                                <td className="text-right py-2 font-semibold">50</td>
-                                                            </tr>
-                                                            <tr className={`${formData.tipoConexao === 'trifasico' ? 'bg-blue-100' : ''}`}>
-                                                                <td className="py-2 font-bold">Trifásica</td>
-                                                                <td className="text-right py-2 font-bold">100</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                                <table className="w-full">
+                                                    <thead>
+                                                        <tr className="border-b-2 border-gray-300">
+                                                            <th className="text-left py-2 px-3 font-semibold">Conexão</th>
+                                                            <th className="text-right py-2 px-3 font-semibold">Consumo Mínimo kWh</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr className={`border-b ${formData.tipoConexao === 'monofasico' ? 'bg-blue-50' : ''}`}>
+                                                            <td className="py-2 px-3">Monofásica</td>
+                                                            <td className="text-right py-2 px-3 font-semibold">30</td>
+                                                        </tr>
+                                                        <tr className={`border-b ${formData.tipoConexao === 'bifasico' ? 'bg-blue-50' : ''}`}>
+                                                            <td className="py-2 px-3">Bifásica</td>
+                                                            <td className="text-right py-2 px-3 font-semibold">50</td>
+                                                        </tr>
+                                                        <tr className={`${formData.tipoConexao === 'trifasico' ? 'bg-blue-100 border-2 border-blue-500' : ''}`}>
+                                                            <td className="py-2 px-3 font-bold">Trifásica</td>
+                                                            <td className="text-right py-2 px-3 font-bold text-lg">100</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <div className="border-t-2 border-gray-300 pt-4">
+                                                <div className="flex justify-between items-center">
+                                                    <h4 className="font-bold text-lg">Consumo Médio Mensal:</h4>
+                                                    <p className="text-3xl font-bold">{simulacao.consumo} kWh</p>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
-                                                <p className="text-center text-lg font-bold text-blue-800 mb-3">
-                                                    Consumo Médio Mensal: <span className="text-2xl">{simulacao.consumoKW} kWh</span>
-                                                </p>
-                                            </div>
-
-                                            <div className="mt-6">
-                                                <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 border-2 border-gray-200">
-                                                    <h4 className="font-semibold text-center mb-3 text-blue-800">📊 Resumo da Economia</h4>
-                                                    <div className="space-y-2 text-sm">
-                                                        <div className="flex justify-between py-1">
-                                                            <span>Economia Mensal:</span>
-                                                            <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</span>
-                                                        </div>
-                                                        <div className="flex justify-between py-1">
-                                                            <span>Economia Anual:</span>
-                                                            <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
-                                                        </div>
-                                                        <div className="flex justify-between py-1 border-t border-gray-300 pt-2">
-                                                            <span>Tipo de Conexão:</span>
-                                                            <span className="font-bold capitalize">{simulacao.tipoConexao}</span>
-                                                        </div>
-                                                        <div className="flex justify-between py-1">
-                                                            <span>Desconto Aplicado:</span>
-                                                            <span className="font-bold text-blue-600">{simulacao.desconto}%</span>
-                                                        </div>
-                                                    </div>
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-300">
+                                            <h4 className="font-bold text-blue-800 mb-2">📊 Resumo da Economia</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span>Economia Mensal:</span>
+                                                    <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Economia Anual:</span>
+                                                    <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Tipo de Conexão:</span>
+                                                    <span className="font-bold">{formData.tipoConexao.charAt(0).toUpperCase() + formData.tipoConexao.slice(1)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Desconto Aplicado:</span>
+                                                    <span className="font-bold">{simulacao.desconto}%</span>
                                                 </div>
                                             </div>
                                         </div>
