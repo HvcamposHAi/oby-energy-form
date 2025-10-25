@@ -816,10 +816,6 @@
                                     {errors.numeroInstalacao && <p className="text-red-500 text-sm mt-1">{errors.numeroInstalacao}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Número do Cliente (opcional)</label>
-                                    <input type="text" name="numeroCliente" value={formData.numeroCliente} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
-                                </div>
-                                <div>
                                     <label className="block text-sm font-medium mb-2">Conta de Energia (PDF ou Imagem) *</label>
                                     <input type="file" name="arquivoConta" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoConta ? 'border-red-500' : 'border-gray-300'}`} />
                                     {formData.arquivoConta && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoConta.name}</p>}
