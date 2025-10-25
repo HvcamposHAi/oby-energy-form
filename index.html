@@ -152,7 +152,6 @@
                         newErrors.consumoKW = `Consumo mínimo para ${formData.tipoConexao} é ${minimo} kW`;
                     }
                     if (!formData.numeroInstalacao) newErrors.numeroInstalacao = 'Número da instalação é obrigatório';
-                    if (!formData.arquivoConta) newErrors.arquivoConta = 'Conta de energia é obrigatória';
                 }
                 if (currentStep === 5) {
                     if (formData.tipoPessoa === 'fisica') {
@@ -178,6 +177,7 @@
                         if (!formData.arquivoRGRespPagFrente) newErrors.arquivoRGRespPagFrente = 'RG frente é obrigatório';
                         if (!formData.arquivoRGRespPagVerso) newErrors.arquivoRGRespPagVerso = 'RG verso é obrigatório';
                     }
+                    if (!formData.arquivoConta) newErrors.arquivoConta = 'Conta de energia é obrigatória';
                     if (!formData.aceiteTermoAdesao) newErrors.aceiteTermoAdesao = 'Aceite obrigatório';
                     if (!formData.aceiteDadosPessoais) newErrors.aceiteDadosPessoais = 'Aceite obrigatório';
                 }
@@ -815,12 +815,6 @@
                                     <input type="text" name="numeroInstalacao" value={formData.numeroInstalacao} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroInstalacao ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.numeroInstalacao && <p className="text-red-500 text-sm mt-1">{errors.numeroInstalacao}</p>}
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Conta de Energia (PDF ou Imagem) *</label>
-                                    <input type="file" name="arquivoConta" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoConta ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {formData.arquivoConta && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoConta.name}</p>}
-                                    {errors.arquivoConta && <p className="text-red-500 text-sm mt-1">{errors.arquivoConta}</p>}
-                                </div>
                             </div>
                         )}
 
@@ -1105,6 +1099,13 @@
                                             </div>
                                         </div>
                                     )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Conta de Energia (PDF ou Imagem) *</label>
+                                    <input type="file" name="arquivoConta" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoConta ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {formData.arquivoConta && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoConta.name}</p>}
+                                    {errors.arquivoConta && <p className="text-red-500 text-sm mt-1">{errors.arquivoConta}</p>}
                                 </div>
 
                                 <div className="border-t pt-6 mt-6 space-y-3">
