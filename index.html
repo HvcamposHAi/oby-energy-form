@@ -24,7 +24,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState } = React;
 
         const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
@@ -66,17 +66,6 @@
             const [estadoForaCobertura, setEstadoForaCobertura] = useState(false);
 
             const consumoMinimo = { trifasico: 100, bifasico: 50, monofasico: 30 };
-
-            // Debug: log do estado atual
-            console.log('🔄 Renderizando componente:', { step, simulacao: simulacao ? 'Existe' : 'NULL', loading });
-
-            // useEffect: Calcular simulação automaticamente se chegar na etapa 4 sem simulação
-            useEffect(() => {
-                if (step === 4 && !simulacao && formData.consumoKW && formData.tipoConexao) {
-                    console.log('⚡ Etapa 4 detectada sem simulação, calculando automaticamente...');
-                    calcularSimulacao();
-                }
-            }, [step]);
 
             const handleInputChange = (e) => {
                 const { name, value, type, checked } = e.target;
@@ -198,182 +187,206 @@
                 return Object.keys(newErrors).length === 0;
             };
 
+            // CÁLCULO ORIGINAL QUE FUNCIONAVA
             const calcularSimulacao = async () => {
+                // Buscar configurações do banco de dados
+                let tarifaTotal = 0.842355;
+                let proporcaoEnergia = 0.81;
+                let proporcaoImpostos = 0.19;
+                
                 try {
-                    console.log('🔄 Iniciando cálculo da simulação...');
-                    console.log('📊 Dados do formulário:', {
-                        consumoKW: formData.consumoKW,
-                        tipoConexao: formData.tipoConexao,
-                        cupom: formData.cupom
-                    });
-
-                    // Valores padrão
-                    let tarifaKwh = 0.842355;
-                    let proporcaoEnergia = 0.81;
-                    let proporcaoImpostos = 0.19;
-                    
-                    try {
-                        console.log('🔍 Buscando configurações do banco...');
-                        const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*&limit=1`, {
-                            headers: {
-                                'apikey': SUPABASE_KEY,
-                                'Authorization': `Bearer ${SUPABASE_KEY}`
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            const configs = await response.json();
-                            console.log('✅ Configurações recebidas:', configs);
-                            
-                            if (configs && configs.length > 0) {
-                                const config = configs[0];
-                                tarifaKwh = parseFloat(config.tarifa_kwh) || tarifaKwh;
-                                proporcaoEnergia = parseFloat(config.proporcao_energia) || proporcaoEnergia;
-                                proporcaoImpostos = parseFloat(config.proporcao_impostos) || proporcaoImpostos;
-                                console.log('💡 Usando valores do banco:', { tarifaKwh, proporcaoEnergia, proporcaoImpostos });
-                            }
-                        } else {
-                            console.warn('⚠️ Erro ao buscar configurações, usando valores padrão');
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'apikey': SUPABASE_KEY
                         }
-                    } catch (error) {
-                        console.warn('⚠️ Erro na conexão com banco, usando valores padrão:', error);
-                    }
-
-                    // Cálculos
-                    const consumo = parseFloat(formData.consumoKW);
-                    const consumoMinimoKW = consumoMinimo[formData.tipoConexao];
-                    const desconto = formData.cupom ? 0.20 : 0.15;
-                    
-                    console.log('🧮 Iniciando cálculos...', {
-                        consumo,
-                        consumoMinimoKW,
-                        desconto: `${desconto * 100}%`,
-                        tarifaKwh,
-                        proporcaoEnergia,
-                        proporcaoImpostos
                     });
-
-                    // Validação
-                    if (isNaN(consumo) || consumo <= 0) {
-                        throw new Error('Consumo inválido');
-                    }
-
-                    // Cálculo do consumo mínimo
-                    const consumoMinimoValor = consumoMinimoKW * tarifaKwh;
+                    const configs = await response.json();
                     
-                    // Cálculo do valor total
-                    const valorTotal = consumo * tarifaKwh;
-                    const valorEnergia = valorTotal * proporcaoEnergia;
-                    const valorImpostos = valorTotal * proporcaoImpostos;
-                    
-                    // Energia cativa sem e com desconto
-                    const energiaCativaAtual = valorEnergia;
-                    const energiaCativaComDesconto = valorEnergia * (1 - desconto);
-                    
-                    // Totais
-                    const contaAtual = consumoMinimoValor + valorImpostos + energiaCativaAtual;
-                    const contaNova = consumoMinimoValor + valorImpostos + energiaCativaComDesconto;
-                    
-                    // Economia
-                    const economiaMensal = energiaCativaAtual - energiaCativaComDesconto;
-                    const economiaAnual = economiaMensal * 12;
-                    const contasPorAno = (12 - (economiaAnual / contaAtual)).toFixed(2);
-
-                    const resultado = {
-                        desconto: desconto * 100,
-                        consumoMinimoValor,
-                        impostosNaoCompensaveis: valorImpostos,
-                        energiaCativaAtual,
-                        energiaCativaComDesconto,
-                        contaAtual,
-                        contaNova,
-                        economiaMensal,
-                        economiaAnual,
-                        contasPorAno,
-                        consumoKW: consumo,
-                        consumoMinimoKW,
-                        tipoConexao: formData.tipoConexao
-                    };
-
-                    console.log('✅ Simulação calculada:', resultado);
-                    console.log('📈 Valores finais:', {
-                        'Conta Atual': `R$ ${resultado.contaAtual.toFixed(2)}`,
-                        'Conta Nova': `R$ ${resultado.contaNova.toFixed(2)}`,
-                        'Economia Mensal': `R$ ${resultado.economiaMensal.toFixed(2)}`
+                    configs.forEach(config => {
+                        if (config.chave === 'tarifa_kwh') tarifaTotal = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_energia') proporcaoEnergia = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_impostos') proporcaoImpostos = parseFloat(config.valor);
                     });
-                    
-                    setSimulacao(resultado);
-                    console.log('✅ Estado da simulação atualizado');
-                    
                 } catch (error) {
-                    console.error('❌ ERRO CRÍTICO ao calcular simulação:', error);
-                    alert('Erro ao calcular a simulação. Verifique os dados e tente novamente.');
-                    throw error;
+                    console.log('Usando valores padrão');
                 }
+
+                const consumo = parseFloat(formData.consumoKW);
+                const minimo = consumoMinimo[formData.tipoConexao];
+                const desconto = formData.cupom ? 0.20 : 0.15;
+                
+                const tarifaEnergia = tarifaTotal * proporcaoEnergia;
+                const tarifaImpostos = tarifaTotal * proporcaoImpostos;
+                
+                const consumoMinimoValor = minimo * tarifaTotal;
+                const consumoExcedente = consumo - minimo;
+                const impostosNaoCompensaveis = consumoExcedente * tarifaImpostos;
+                
+                const energiaCativaAtual = consumoExcedente * tarifaEnergia;
+                const contaAtual = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaAtual;
+                
+                const tarifaEnergiaComDesconto = tarifaEnergia * (1 - desconto);
+                const energiaCativaComDesconto = consumoExcedente * tarifaEnergiaComDesconto;
+                const contaNova = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaComDesconto;
+                
+                const economiaMensal = contaAtual - contaNova;
+                const economiaAnual = economiaMensal * 12;
+                const contasPorAno = 12 - (economiaAnual / contaAtual);
+                
+                setSimulacao({
+                    contaAtual: contaAtual.toFixed(2),
+                    contaNova: contaNova.toFixed(2),
+                    economiaMensal: economiaMensal.toFixed(2),
+                    economiaAnual: economiaAnual.toFixed(2),
+                    desconto: (desconto * 100).toFixed(0),
+                    consumo,
+                    minimo,
+                    consumoMinimoValor: consumoMinimoValor.toFixed(2),
+                    impostosNaoCompensaveis: impostosNaoCompensaveis.toFixed(2),
+                    energiaCativaAtual: energiaCativaAtual.toFixed(2),
+                    energiaCativaComDesconto: energiaCativaComDesconto.toFixed(2),
+                    contasPorAno: contasPorAno.toFixed(2),
+                    consumoKW: consumo,
+                    tipoConexao: formData.tipoConexao
+                });
             };
 
             const handleNext = async () => {
-                console.log('🔵 handleNext chamado, step atual:', step);
+                if (!validateStep()) return;
                 
-                if (!validateStep()) {
-                    console.log('❌ Validação falhou');
-                    return;
-                }
-                
+                if (step === 3) await calcularSimulacao();
                 if (step === 5) {
-                    console.log('📤 Submissão final...');
                     await handleSubmit();
                     return;
                 }
                 
-                if (step === 3) {
-                    console.log('⏳ Etapa 3 concluída, calculando simulação...');
-                    setLoading(true);
-                    try {
-                        await calcularSimulacao();
-                        console.log('✅ Simulação calculada com sucesso');
-                    } catch (error) {
-                        console.error('❌ Erro ao calcular:', error);
-                        alert('Erro ao calcular a simulação. Tente novamente.');
-                        setLoading(false);
-                        return;
-                    }
-                    setLoading(false);
-                }
-                
-                console.log('➡️ Avançando para etapa', step + 1);
                 setStep(step + 1);
             };
 
             const uploadFile = async (file, folder) => {
+                console.log(`📤 Iniciando upload: ${file.name} para ${folder}`);
                 const fileName = `${Date.now()}_${file.name}`;
-                const response = await fetch(
-                    `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
-                        },
-                        body: file
-                    }
-                );
                 
-                if (!response.ok) throw new Error('Erro no upload');
-                return `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
+                try {
+                    const response = await fetch(
+                        `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Content-Type': file.type
+                            },
+                            body: file
+                        }
+                    );
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`❌ Erro no upload de ${file.name}:`, errorText);
+                        throw new Error(`Erro no upload de ${file.name}: ${errorText}`);
+                    }
+                    
+                    const url = `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
+                    console.log(`✅ Upload concluído: ${url}`);
+                    return url;
+                } catch (error) {
+                    console.error(`❌ Erro no upload de ${file.name}:`, error);
+                    throw error;
+                }
             };
 
             const handleSubmit = async () => {
+                console.log('📝 Iniciando submissão da proposta...');
                 setLoading(true);
+                
                 try {
-                    const arquivoContaUrl = formData.arquivoConta ? await uploadFile(formData.arquivoConta, 'contas-energia') : null;
-                    const arquivoRGFrenteUrl = formData.arquivoRGFrente ? await uploadFile(formData.arquivoRGFrente, 'documentos') : null;
-                    const arquivoRGVersoUrl = formData.arquivoRGVerso ? await uploadFile(formData.arquivoRGVerso, 'documentos') : null;
-                    const arquivoRGRep1FrenteUrl = formData.arquivoRGRep1Frente ? await uploadFile(formData.arquivoRGRep1Frente, 'documentos') : null;
-                    const arquivoRGRep1VersoUrl = formData.arquivoRGRep1Verso ? await uploadFile(formData.arquivoRGRep1Verso, 'documentos') : null;
-                    const arquivoRGRespPagFrenteUrl = formData.arquivoRGRespPagFrente ? await uploadFile(formData.arquivoRGRespPagFrente, 'documentos') : null;
-                    const arquivoRGRespPagVersoUrl = formData.arquivoRGRespPagVerso ? await uploadFile(formData.arquivoRGRespPagVerso, 'documentos') : null;
-                    const contratoSocialUrl = formData.contratoSocial ? await uploadFile(formData.contratoSocial, 'documentos') : null;
+                    console.log('📤 Fase 1: Upload de arquivos...');
+                    
+                    // Upload de arquivos com tratamento individual
+                    let arquivoContaUrl = null;
+                    if (formData.arquivoConta) {
+                        try {
+                            arquivoContaUrl = await uploadFile(formData.arquivoConta, 'contas-energia');
+                        } catch (e) {
+                            console.error('Erro no upload da conta:', e);
+                            throw new Error('Erro ao fazer upload da conta de energia');
+                        }
+                    }
+                    
+                    let arquivoRGFrenteUrl = null;
+                    if (formData.arquivoRGFrente) {
+                        try {
+                            arquivoRGFrenteUrl = await uploadFile(formData.arquivoRGFrente, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload RG frente:', e);
+                            throw new Error('Erro ao fazer upload do RG (frente)');
+                        }
+                    }
+                    
+                    let arquivoRGVersoUrl = null;
+                    if (formData.arquivoRGVerso) {
+                        try {
+                            arquivoRGVersoUrl = await uploadFile(formData.arquivoRGVerso, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload RG verso:', e);
+                            throw new Error('Erro ao fazer upload do RG (verso)');
+                        }
+                    }
+                    
+                    let arquivoRGRep1FrenteUrl = null;
+                    if (formData.arquivoRGRep1Frente) {
+                        try {
+                            arquivoRGRep1FrenteUrl = await uploadFile(formData.arquivoRGRep1Frente, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload RG rep frente:', e);
+                            throw new Error('Erro ao fazer upload do RG do representante (frente)');
+                        }
+                    }
+                    
+                    let arquivoRGRep1VersoUrl = null;
+                    if (formData.arquivoRGRep1Verso) {
+                        try {
+                            arquivoRGRep1VersoUrl = await uploadFile(formData.arquivoRGRep1Verso, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload RG rep verso:', e);
+                            throw new Error('Erro ao fazer upload do RG do representante (verso)');
+                        }
+                    }
+                    
+                    let arquivoRGRespPagFrenteUrl = null;
+                    if (formData.arquivoRGRespPagFrente) {
+                        try {
+                            arquivoRGRespPagFrenteUrl = await uploadFile(formData.arquivoRGRespPagFrente, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload RG resp pag frente:', e);
+                            throw new Error('Erro ao fazer upload do RG do responsável pelo pagamento (frente)');
+                        }
+                    }
+                    
+                    let arquivoRGRespPagVersoUrl = null;
+                    if (formData.arquivoRGRespPagVerso) {
+                        try {
+                            arquivoRGRespPagVersoUrl = await uploadFile(formData.arquivoRGRespPagVerso, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload RG resp pag verso:', e);
+                            throw new Error('Erro ao fazer upload do RG do responsável pelo pagamento (verso)');
+                        }
+                    }
+                    
+                    let contratoSocialUrl = null;
+                    if (formData.contratoSocial) {
+                        try {
+                            contratoSocialUrl = await uploadFile(formData.contratoSocial, 'documentos');
+                        } catch (e) {
+                            console.error('Erro no upload contrato social:', e);
+                            throw new Error('Erro ao fazer upload do contrato social');
+                        }
+                    }
+                    
+                    console.log('✅ Uploads concluídos com sucesso!');
+                    console.log('📝 Fase 2: Preparando dados da proposta...');
                     
                     const proposta = {
                         nome_completo: `${formData.nome} ${formData.sobrenome}`,
@@ -382,7 +395,7 @@
                         cep: formData.cep,
                         logradouro: formData.logradouro,
                         numero_endereco: formData.numeroEndereco,
-                        complemento: formData.complemento,
+                        complemento: formData.complemento || null,
                         bairro: formData.bairro,
                         cidade: formData.cidade,
                         estado: formData.estado,
@@ -392,18 +405,18 @@
                         consumo_kw: parseFloat(formData.consumoKW),
                         numero_instalacao: formData.numeroInstalacao,
                         tipo_pessoa: formData.tipoPessoa,
-                        cpf: formData.cpf,
-                        rg: formData.rg,
-                        cnpj: formData.cnpj,
-                        nome_fantasia: formData.nomeFantasia,
-                        razao_social: formData.razaoSocial,
-                        representante_legal_1: formData.representanteLegal1,
-                        cpf_representante_1: formData.cpfRepresentante1,
-                        rg_representante_1: formData.rgRepresentante1,
+                        cpf: formData.cpf || null,
+                        rg: formData.rg || null,
+                        cnpj: formData.cnpj || null,
+                        nome_fantasia: formData.nomeFantasia || null,
+                        razao_social: formData.razaoSocial || null,
+                        representante_legal_1: formData.representanteLegal1 || null,
+                        cpf_representante_1: formData.cpfRepresentante1 || null,
+                        rg_representante_1: formData.rgRepresentante1 || null,
                         tem_responsavel_pagamento: formData.temResponsavelPagamento,
-                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento,
-                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento,
-                        rg_responsavel_pagamento: formData.rgResponsavelPagamento,
+                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento || null,
+                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento || null,
+                        rg_responsavel_pagamento: formData.rgResponsavelPagamento || null,
                         arquivo_conta_url: arquivoContaUrl,
                         arquivo_rg_frente_url: arquivoRGFrenteUrl,
                         arquivo_rg_verso_url: arquivoRGVersoUrl,
@@ -412,16 +425,19 @@
                         arquivo_rg_resp_pag_frente_url: arquivoRGRespPagFrenteUrl,
                         arquivo_rg_resp_pag_verso_url: arquivoRGRespPagVersoUrl,
                         contrato_social_url: contratoSocialUrl,
-                        simulacao_economia_mensal: simulacao.economiaMensal,
-                        simulacao_economia_anual: simulacao.economiaAnual,
-                        simulacao_conta_atual: simulacao.contaAtual,
-                        simulacao_conta_nova: simulacao.contaNova,
-                        desconto_aplicado: simulacao.desconto,
-                        cupom_desconto: formData.cupom,
+                        simulacao_economia_mensal: parseFloat(simulacao.economiaMensal),
+                        simulacao_economia_anual: parseFloat(simulacao.economiaAnual),
+                        simulacao_conta_atual: parseFloat(simulacao.contaAtual),
+                        simulacao_conta_nova: parseFloat(simulacao.contaNova),
+                        desconto_aplicado: parseFloat(simulacao.desconto),
+                        cupom_desconto: formData.cupom || null,
                         aceite_termo_adesao: formData.aceiteTermoAdesao,
                         aceite_dados_pessoais: formData.aceiteDadosPessoais,
                         status: 'pendente'
                     };
+                    
+                    console.log('📊 Dados da proposta preparados:', proposta);
+                    console.log('💾 Fase 3: Salvando proposta no banco...');
                     
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
                         method: 'POST',
@@ -434,14 +450,21 @@
                         body: JSON.stringify(proposta)
                     });
                     
-                    if (!response.ok) throw new Error('Erro ao salvar proposta');
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Erro na resposta do servidor:', errorText);
+                        throw new Error(`Erro ao salvar proposta: ${errorText}`);
+                    }
                     
                     const result = await response.json();
+                    console.log('✅ Proposta salva com sucesso!', result);
+                    
                     setPropostaId(result[0].id);
                     setMostrarRevisao(true);
+                    
                 } catch (error) {
-                    console.error('Erro:', error);
-                    alert('Erro ao enviar proposta. Tente novamente.');
+                    console.error('❌ ERRO GERAL:', error);
+                    alert(`Erro ao enviar proposta: ${error.message}\n\nVerifique o console para mais detalhes.`);
                 } finally {
                     setLoading(false);
                 }
@@ -455,12 +478,10 @@
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-8">
                                 <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-24 w-auto mx-auto mb-4" />
-                                <h1 className="text-3xl font-bold text-green-600">✅ Proposta Enviada com Sucesso!</h1>
-                                <p className="text-gray-600 mt-2">Sua proposta foi registrada e será analisada em breve.</p>
+                                <h1 className="text-3xl font-bold text-green-600">✅ Proposta Enviada!</h1>
                             </div>
-
                             <div className="bg-gradient-to-r from-green-100 to-blue-100 p-8 rounded-xl mb-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                                <div className="grid grid-cols-3 gap-6 text-center">
                                     <div>
                                         <p className="text-sm text-gray-600 mb-2">Economia Mensal</p>
                                         <p className="text-3xl font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</p>
@@ -475,44 +496,13 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6">
-                                <h2 className="text-2xl font-bold mb-6 text-center border-b pb-4">Resumo da Proposta</h2>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-3 text-blue-600">Dados Pessoais</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <p><strong>Nome:</strong> {formData.nome} {formData.sobrenome}</p>
-                                            <p><strong>Email:</strong> {formData.email}</p>
-                                            <p><strong>Telefone:</strong> {formData.telefone}</p>
-                                            <p><strong>Tipo:</strong> {formData.tipoPessoa === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-3 text-green-600">Dados da Instalação</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <p><strong>Tipo de Conexão:</strong> {formData.tipoConexao}</p>
-                                            <p><strong>Consumo:</strong> {formData.consumoKW} kW</p>
-                                            <p><strong>Nº Instalação:</strong> {formData.numeroInstalacao}</p>
-                                            <p><strong>Modalidade:</strong> {formData.modalidadeTarifaria}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="mt-8 flex gap-4 justify-center no-print">
-                                <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
-                                    🖨️ Imprimir Proposta
+                            <div className="mt-8 flex gap-4 justify-center">
+                                <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg">
+                                    🖨️ Imprimir
                                 </button>
-                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">
+                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg">
                                     ➕ Nova Proposta
                                 </button>
-                            </div>
-
-                            <div className="mt-6 text-center text-xs text-gray-500">
-                                <p>Data: {dataAtual} | ID da Proposta: {propostaId}</p>
                             </div>
                         </div>
                     </div>
@@ -591,7 +581,7 @@
                                     <p className="text-sm text-indigo-800">📍 Endereço do Cliente</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Logradouro (Rua/Avenida) *</label>
+                                    <label className="block text-sm font-medium mb-2">Logradouro *</label>
                                     <input type="text" name="logradouro" value={formData.logradouro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.logradouro ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.logradouro && <p className="text-red-500 text-sm mt-1">{errors.logradouro}</p>}
                                 </div>
@@ -635,8 +625,8 @@
                                         Como encontrar essas informações na sua conta da COPEL
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-1.png" alt="Guia COPEL" className="w-full rounded-lg" />
-                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-2.png" alt="Guia COPEL" className="w-full rounded-lg" />
+                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-1.png" alt="Guia" className="w-full rounded-lg" />
+                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-2.png" alt="Guia" className="w-full rounded-lg" />
                                     </div>
                                 </div>
                                 <div>
@@ -651,7 +641,7 @@
                                     {errors.modalidadeTarifaria && <p className="text-red-500 text-sm mt-1">{errors.modalidadeTarifaria}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Distribuidora de Energia *</label>
+                                    <label className="block text-sm font-medium mb-2">Distribuidora *</label>
                                     <input type="text" name="distribuidoraEnergia" value={formData.distribuidoraEnergia} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.distribuidoraEnergia ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.distribuidoraEnergia && <p className="text-red-500 text-sm mt-1">{errors.distribuidoraEnergia}</p>}
                                 </div>
@@ -680,19 +670,6 @@
                             </div>
                         )}
 
-                        {step === 4 && !simulacao && (
-                            <div className="space-y-6 text-center">
-                                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-8">
-                                    <div className="text-6xl mb-4">⚠️</div>
-                                    <h3 className="text-2xl font-bold text-yellow-800 mb-4">Simulação não calculada</h3>
-                                    <p className="text-yellow-700 mb-4">Houve um problema ao calcular a simulação.</p>
-                                    <button onClick={() => setStep(3)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                        Voltar e Tentar Novamente
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
                         {step === 4 && simulacao && (
                             <div className="space-y-6">
                                 <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center">
@@ -712,11 +689,11 @@
                                                         <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span>Impostos</span>
+                                                        <span>Impostos Não Compensáveis</span>
                                                         <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span>Energia</span>
+                                                        <span>Energia Cativa</span>
                                                         <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
                                                     </div>
                                                     <div className="border-t pt-1 flex justify-between font-bold">
@@ -733,11 +710,11 @@
                                                         <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span>Impostos</span>
+                                                        <span>Impostos Não Compensáveis</span>
                                                         <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span>Energia</span>
+                                                        <span>Energia Cativa</span>
                                                         <span>R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
                                                     </div>
                                                     <div className="border-t pt-1 flex justify-between font-bold text-green-700">
@@ -769,7 +746,7 @@
                                                     <span>R$ {formatBRL(simulacao.contaAtual)}</span>
                                                 </div>
                                                 <div className="flex justify-between text-green-600 font-bold">
-                                                    <span>Desconto Oby (-{simulacao.desconto}%)</span>
+                                                    <span>Desconto Oby na Energia (-{simulacao.desconto}%)</span>
                                                     <span>(R$ {formatBRL(simulacao.economiaMensal)})</span>
                                                 </div>
                                                 <div className="border-t-2 pt-1 flex justify-between font-bold text-green-700">
@@ -781,8 +758,8 @@
 
                                         <div className="bg-green-100 p-4 rounded-lg border-2 border-green-400 text-center">
                                             <p className="text-green-800 font-bold">
-                                                Equivale a pagar<br/>
-                                                <span className="text-2xl">{simulacao.contasPorAno} contas/ano</span>
+                                                Sua economia equivale a pagar somente<br/>
+                                                <span className="text-2xl">{simulacao.contasPorAno} contas ao ano</span>
                                             </p>
                                         </div>
 
@@ -799,7 +776,7 @@
                                                 <thead>
                                                     <tr className="border-b">
                                                         <th className="text-left py-2">Conexão</th>
-                                                        <th className="text-right py-2">kWh</th>
+                                                        <th className="text-right py-2">Consumo Mínimo kWh</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -836,11 +813,11 @@
                                                     <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
                                                 </div>
                                                 <div className="flex justify-between border-t pt-2">
-                                                    <span>Tipo:</span>
+                                                    <span>Tipo de Conexão:</span>
                                                     <span className="font-bold capitalize">{simulacao.tipoConexao}</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span>Desconto:</span>
+                                                    <span>Desconto Aplicado:</span>
                                                     <span className="font-bold text-blue-600">{simulacao.desconto}%</span>
                                                 </div>
                                             </div>
@@ -1030,12 +1007,12 @@
                             )}
                             <div className="flex-1"></div>
                             {step < 5 ? (
-                                <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
-                                    {loading && step === 3 ? '⏳ Calculando...' : 'Prosseguir'}
+                                <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                                    Prosseguir
                                 </button>
                             ) : (
                                 <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
-                                    {loading ? '⏳ Enviando...' : 'Enviar Proposta'}
+                                    {loading ? '⏳ Enviando arquivos e dados...' : 'Enviar Proposta'}
                                 </button>
                             )}
                         </div>
