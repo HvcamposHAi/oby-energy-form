@@ -495,35 +495,175 @@
                 const dataAtual = new Date().toLocaleDateString('pt-BR');
                 
                 return (
-                    <div className="min-h-screen bg-white p-8">
-                        <div className="max-w-4xl mx-auto">
-                            <div className="text-center mb-8">
-                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-24 w-auto mx-auto mb-4" />
-                                <h1 className="text-3xl font-bold text-green-600">✅ Proposta Enviada!</h1>
-                            </div>
-                            <div className="bg-gradient-to-r from-green-100 to-blue-100 p-8 rounded-xl mb-8">
-                                <div className="grid grid-cols-3 gap-6 text-center">
+                    <div className="min-h-screen bg-gray-50 p-8">
+                        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg">
+                            {/* Cabeçalho com logo e sucesso */}
+                            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-8 rounded-t-lg">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-600 mb-2">Economia Mensal</p>
-                                        <p className="text-3xl font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</p>
+                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-16 w-auto mb-4" style={{filter: 'brightness(0) invert(1)'}} />
+                                        <h1 className="text-4xl font-bold mb-2">✓ Proposta Enviada com Sucesso!</h1>
+                                        <p className="text-green-100">Protocolo: #{propostaId || 'Em processamento'} | Data: {dataAtual}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Economia Anual</p>
-                                        <p className="text-3xl font-bold text-blue-600">R$ {formatBRL(simulacao.economiaAnual)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Desconto</p>
-                                        <p className="text-3xl font-bold text-purple-600">{simulacao.desconto}%</p>
+                                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
+                                        <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                        </svg>
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-8 flex gap-4 justify-center">
-                                <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg">
-                                    🖨️ Imprimir
-                                </button>
-                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg">
-                                    ➕ Nova Proposta
-                                </button>
+
+                            <div className="p-8">
+                                {/* Cards de resumo de economia */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg border-2 border-green-300">
+                                        <p className="text-sm text-gray-600 mb-2">💰 Economia Mensal</p>
+                                        <p className="text-3xl font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</p>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border-2 border-blue-300">
+                                        <p className="text-sm text-gray-600 mb-2">📊 Economia Anual</p>
+                                        <p className="text-3xl font-bold text-blue-600">R$ {formatBRL(simulacao.economiaAnual)}</p>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border-2 border-purple-300">
+                                        <p className="text-sm text-gray-600 mb-2">🎯 Desconto Aplicado</p>
+                                        <p className="text-3xl font-bold text-purple-600">{simulacao.desconto}%</p>
+                                    </div>
+                                </div>
+
+                                {/* Dados do Cliente */}
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-bold mb-4 pb-2 border-b-2 border-gray-200">📋 Dados do Cliente</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg">
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Nome Completo</p>
+                                            <p className="font-semibold text-lg">{formData.nome} {formData.sobrenome}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">E-mail</p>
+                                            <p className="font-semibold">{formData.email}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Telefone</p>
+                                            <p className="font-semibold">{formData.telefone}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">CPF/CNPJ</p>
+                                            <p className="font-semibold">{formData.tipoPessoa === 'fisica' ? formData.cpf : formData.cnpj}</p>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <p className="text-sm text-gray-500 mb-1">Endereço</p>
+                                            <p className="font-semibold">
+                                                {formData.logradouro}, {formData.numeroEndereco}
+                                                {formData.complemento && ` - ${formData.complemento}`}
+                                                <br />
+                                                {formData.bairro} - {formData.cidade}/{formData.estado} - CEP: {formData.cep}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Dados da Instalação */}
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-bold mb-4 pb-2 border-b-2 border-gray-200">⚡ Dados da Instalação</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-6 rounded-lg">
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Distribuidora</p>
+                                            <p className="font-semibold">{formData.distribuidoraEnergia}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Número da Instalação</p>
+                                            <p className="font-semibold">{formData.numeroInstalacao}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Tipo de Conexão</p>
+                                            <p className="font-semibold capitalize">{formData.tipoConexao}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Consumo Médio Mensal</p>
+                                            <p className="font-semibold text-xl text-blue-600">{formatBRL(formData.consumoKW)} kWh</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Modalidade Tarifária</p>
+                                            <p className="font-semibold">{formData.modalidadeTarifaria}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Memória de Cálculo */}
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-bold mb-4 pb-2 border-b-2 border-gray-200">🧮 Memória de Cálculo</h2>
+                                    <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-6 rounded-lg border-2 border-blue-200">
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center py-3 border-b border-gray-300">
+                                                <span className="text-gray-700">💡 Consumo Médio Mensal</span>
+                                                <span className="font-bold text-lg">{formatBRL(formData.consumoKW)} kWh</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-3 border-b border-gray-300">
+                                                <span className="text-gray-700">📊 Consumo Mínimo ({formData.tipoConexao})</span>
+                                                <span className="font-semibold">{consumoMinimo[formData.tipoConexao]} kWh</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-3 border-b border-gray-300">
+                                                <span className="text-gray-700">⚡ Tarifa Média (estimada)</span>
+                                                <span className="font-semibold">R$ {formatBRL(simulacao.tarifaMedia)}/kWh</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-3 border-b border-gray-300 bg-red-50">
+                                                <span className="text-gray-700 font-semibold">💰 Conta Atual (sem desconto)</span>
+                                                <span className="font-bold text-lg text-red-600">R$ {formatBRL(simulacao.contaAtual)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-3 border-b border-gray-300 bg-green-50">
+                                                <span className="text-gray-700 font-semibold">🎯 Desconto Aplicado</span>
+                                                <span className="font-bold text-lg text-purple-600">{simulacao.desconto}%</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-3 border-b-2 border-green-400 bg-green-50">
+                                                <span className="text-gray-700 font-semibold">✅ Conta com Oby Energy</span>
+                                                <span className="font-bold text-lg text-green-600">R$ {formatBRL(simulacao.contaNova)}</span>
+                                            </div>
+                                            
+                                            {/* Resultado Final */}
+                                            <div className="mt-6 pt-6 border-t-2 border-gray-300">
+                                                <div className="flex justify-between items-center py-3 bg-gradient-to-r from-green-100 to-blue-100 px-4 rounded-lg mb-2">
+                                                    <span className="text-lg font-bold text-gray-800">💵 Economia Mensal</span>
+                                                    <span className="font-bold text-2xl text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-3 bg-gradient-to-r from-blue-100 to-purple-100 px-4 rounded-lg">
+                                                    <span className="text-lg font-bold text-gray-800">📈 Economia Anual (12 meses)</span>
+                                                    <span className="font-bold text-2xl text-blue-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Observações */}
+                                            <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                                                <p className="text-sm text-gray-700">
+                                                    <strong>⚠️ Observação:</strong> Os valores apresentados são estimativas baseadas no consumo informado e na tarifa média da distribuidora. 
+                                                    Os valores finais podem variar de acordo com as bandeiras tarifárias, impostos e taxas aplicáveis em cada período de faturamento.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Próximos Passos */}
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-bold mb-4 pb-2 border-b-2 border-gray-200">📌 Próximos Passos</h2>
+                                    <div className="bg-blue-50 p-6 rounded-lg">
+                                        <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                                            <li className="font-semibold">Nossa equipe irá analisar sua proposta em até 24 horas úteis</li>
+                                            <li>Você receberá um e-mail de confirmação com os detalhes do contrato</li>
+                                            <li>Após a aprovação, enviaremos o termo de adesão para assinatura digital</li>
+                                            <li>Em caso de dúvidas, entre em contato através do e-mail: <strong>contato@obyenergy.com.br</strong></li>
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                {/* Botões de ação */}
+                                <div className="flex gap-4 justify-center no-print pt-6 border-t-2">
+                                    <button onClick={() => window.print()} className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-semibold text-lg shadow-lg">
+                                        🖨️ Imprimir Proposta
+                                    </button>
+                                    <button onClick={() => window.location.reload()} className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-semibold text-lg shadow-lg">
+                                        ➕ Nova Proposta
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
