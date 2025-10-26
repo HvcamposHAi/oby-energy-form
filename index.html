@@ -67,6 +67,17 @@
 
             const consumoMinimo = { trifasico: 100, bifasico: 50, monofasico: 30 };
 
+            // Debug: log do estado atual
+            console.log('🔄 Renderizando componente:', { step, simulacao: simulacao ? 'Existe' : 'NULL', loading });
+
+            // useEffect: Calcular simulação automaticamente se chegar na etapa 4 sem simulação
+            useEffect(() => {
+                if (step === 4 && !simulacao && formData.consumoKW && formData.tipoConexao) {
+                    console.log('⚡ Etapa 4 detectada sem simulação, calculando automaticamente...');
+                    calcularSimulacao();
+                }
+            }, [step]);
+
             const handleInputChange = (e) => {
                 const { name, value, type, checked } = e.target;
                 setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -188,115 +199,149 @@
             };
 
             const calcularSimulacao = async () => {
-                console.log('🔄 Iniciando cálculo da simulação...');
-                console.log('📊 Dados do formulário:', {
-                    consumoKW: formData.consumoKW,
-                    tipoConexao: formData.tipoConexao,
-                    cupom: formData.cupom
-                });
-
-                // Valores padrão
-                let tarifaKwh = 0.842355;
-                let proporcaoEnergia = 0.81;
-                let proporcaoImpostos = 0.19;
-                
                 try {
-                    console.log('🔍 Buscando configurações do banco...');
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*&limit=1`, {
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                    console.log('🔄 Iniciando cálculo da simulação...');
+                    console.log('📊 Dados do formulário:', {
+                        consumoKW: formData.consumoKW,
+                        tipoConexao: formData.tipoConexao,
+                        cupom: formData.cupom
+                    });
+
+                    // Valores padrão
+                    let tarifaKwh = 0.842355;
+                    let proporcaoEnergia = 0.81;
+                    let proporcaoImpostos = 0.19;
+                    
+                    try {
+                        console.log('🔍 Buscando configurações do banco...');
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*&limit=1`, {
+                            headers: {
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const configs = await response.json();
+                            console.log('✅ Configurações recebidas:', configs);
+                            
+                            if (configs && configs.length > 0) {
+                                const config = configs[0];
+                                tarifaKwh = parseFloat(config.tarifa_kwh) || tarifaKwh;
+                                proporcaoEnergia = parseFloat(config.proporcao_energia) || proporcaoEnergia;
+                                proporcaoImpostos = parseFloat(config.proporcao_impostos) || proporcaoImpostos;
+                                console.log('💡 Usando valores do banco:', { tarifaKwh, proporcaoEnergia, proporcaoImpostos });
+                            }
+                        } else {
+                            console.warn('⚠️ Erro ao buscar configurações, usando valores padrão');
                         }
+                    } catch (error) {
+                        console.warn('⚠️ Erro na conexão com banco, usando valores padrão:', error);
+                    }
+
+                    // Cálculos
+                    const consumo = parseFloat(formData.consumoKW);
+                    const consumoMinimoKW = consumoMinimo[formData.tipoConexao];
+                    const desconto = formData.cupom ? 0.20 : 0.15;
+                    
+                    console.log('🧮 Iniciando cálculos...', {
+                        consumo,
+                        consumoMinimoKW,
+                        desconto: `${desconto * 100}%`,
+                        tarifaKwh,
+                        proporcaoEnergia,
+                        proporcaoImpostos
+                    });
+
+                    // Validação
+                    if (isNaN(consumo) || consumo <= 0) {
+                        throw new Error('Consumo inválido');
+                    }
+
+                    // Cálculo do consumo mínimo
+                    const consumoMinimoValor = consumoMinimoKW * tarifaKwh;
+                    
+                    // Cálculo do valor total
+                    const valorTotal = consumo * tarifaKwh;
+                    const valorEnergia = valorTotal * proporcaoEnergia;
+                    const valorImpostos = valorTotal * proporcaoImpostos;
+                    
+                    // Energia cativa sem e com desconto
+                    const energiaCativaAtual = valorEnergia;
+                    const energiaCativaComDesconto = valorEnergia * (1 - desconto);
+                    
+                    // Totais
+                    const contaAtual = consumoMinimoValor + valorImpostos + energiaCativaAtual;
+                    const contaNova = consumoMinimoValor + valorImpostos + energiaCativaComDesconto;
+                    
+                    // Economia
+                    const economiaMensal = energiaCativaAtual - energiaCativaComDesconto;
+                    const economiaAnual = economiaMensal * 12;
+                    const contasPorAno = (12 - (economiaAnual / contaAtual)).toFixed(2);
+
+                    const resultado = {
+                        desconto: desconto * 100,
+                        consumoMinimoValor,
+                        impostosNaoCompensaveis: valorImpostos,
+                        energiaCativaAtual,
+                        energiaCativaComDesconto,
+                        contaAtual,
+                        contaNova,
+                        economiaMensal,
+                        economiaAnual,
+                        contasPorAno,
+                        consumoKW: consumo,
+                        consumoMinimoKW,
+                        tipoConexao: formData.tipoConexao
+                    };
+
+                    console.log('✅ Simulação calculada:', resultado);
+                    console.log('📈 Valores finais:', {
+                        'Conta Atual': `R$ ${resultado.contaAtual.toFixed(2)}`,
+                        'Conta Nova': `R$ ${resultado.contaNova.toFixed(2)}`,
+                        'Economia Mensal': `R$ ${resultado.economiaMensal.toFixed(2)}`
                     });
                     
-                    if (response.ok) {
-                        const configs = await response.json();
-                        console.log('✅ Configurações recebidas:', configs);
-                        
-                        if (configs && configs.length > 0) {
-                            const config = configs[0];
-                            tarifaKwh = parseFloat(config.tarifa_kwh) || tarifaKwh;
-                            proporcaoEnergia = parseFloat(config.proporcao_energia) || proporcaoEnergia;
-                            proporcaoImpostos = parseFloat(config.proporcao_impostos) || proporcaoImpostos;
-                            console.log('💡 Usando valores do banco:', { tarifaKwh, proporcaoEnergia, proporcaoImpostos });
-                        }
-                    } else {
-                        console.warn('⚠️ Erro ao buscar configurações, usando valores padrão');
-                    }
+                    setSimulacao(resultado);
+                    console.log('✅ Estado da simulação atualizado');
+                    
                 } catch (error) {
-                    console.warn('⚠️ Erro na conexão, usando valores padrão:', error);
+                    console.error('❌ ERRO CRÍTICO ao calcular simulação:', error);
+                    alert('Erro ao calcular a simulação. Verifique os dados e tente novamente.');
+                    throw error;
                 }
-
-                // Cálculos
-                const consumo = parseFloat(formData.consumoKW);
-                const consumoMinimoKW = consumoMinimo[formData.tipoConexao];
-                const desconto = formData.cupom ? 0.20 : 0.15;
-                
-                console.log('🧮 Iniciando cálculos...', {
-                    consumo,
-                    consumoMinimoKW,
-                    desconto: `${desconto * 100}%`
-                });
-
-                // Cálculo do consumo mínimo
-                const consumoMinimoValor = consumoMinimoKW * tarifaKwh;
-                
-                // Cálculo do valor total
-                const valorTotal = consumo * tarifaKwh;
-                const valorEnergia = valorTotal * proporcaoEnergia;
-                const valorImpostos = valorTotal * proporcaoImpostos;
-                
-                // Energia cativa sem e com desconto
-                const energiaCativaAtual = valorEnergia;
-                const energiaCativaComDesconto = valorEnergia * (1 - desconto);
-                
-                // Totais
-                const contaAtual = consumoMinimoValor + valorImpostos + energiaCativaAtual;
-                const contaNova = consumoMinimoValor + valorImpostos + energiaCativaComDesconto;
-                
-                // Economia
-                const economiaMensal = energiaCativaAtual - energiaCativaComDesconto;
-                const economiaAnual = economiaMensal * 12;
-                const contasPorAno = (12 - (economiaAnual / contaAtual)).toFixed(2);
-
-                const resultado = {
-                    desconto: desconto * 100,
-                    consumoMinimoValor,
-                    impostosNaoCompensaveis: valorImpostos,
-                    energiaCativaAtual,
-                    energiaCativaComDesconto,
-                    contaAtual,
-                    contaNova,
-                    economiaMensal,
-                    economiaAnual,
-                    contasPorAno,
-                    consumoKW: consumo,
-                    consumoMinimoKW,
-                    tipoConexao: formData.tipoConexao
-                };
-
-                console.log('✅ Simulação calculada:', resultado);
-                setSimulacao(resultado);
             };
 
             const handleNext = async () => {
+                console.log('🔵 handleNext chamado, step atual:', step);
+                
                 if (!validateStep()) {
                     console.log('❌ Validação falhou');
                     return;
                 }
                 
-                if (step === 3) {
-                    console.log('⏳ Avançando para etapa 4, calculando simulação...');
-                    setLoading(true);
-                    await calcularSimulacao();
-                    setLoading(false);
-                }
-                
                 if (step === 5) {
+                    console.log('📤 Submissão final...');
                     await handleSubmit();
                     return;
                 }
                 
+                if (step === 3) {
+                    console.log('⏳ Etapa 3 concluída, calculando simulação...');
+                    setLoading(true);
+                    try {
+                        await calcularSimulacao();
+                        console.log('✅ Simulação calculada com sucesso');
+                    } catch (error) {
+                        console.error('❌ Erro ao calcular:', error);
+                        alert('Erro ao calcular a simulação. Tente novamente.');
+                        setLoading(false);
+                        return;
+                    }
+                    setLoading(false);
+                }
+                
+                console.log('➡️ Avançando para etapa', step + 1);
                 setStep(step + 1);
             };
 
@@ -631,6 +676,19 @@
                                     <label className="block text-sm font-medium mb-2">Número da Instalação *</label>
                                     <input type="text" name="numeroInstalacao" value={formData.numeroInstalacao} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroInstalacao ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.numeroInstalacao && <p className="text-red-500 text-sm mt-1">{errors.numeroInstalacao}</p>}
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 4 && !simulacao && (
+                            <div className="space-y-6 text-center">
+                                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-8">
+                                    <div className="text-6xl mb-4">⚠️</div>
+                                    <h3 className="text-2xl font-bold text-yellow-800 mb-4">Simulação não calculada</h3>
+                                    <p className="text-yellow-700 mb-4">Houve um problema ao calcular a simulação.</p>
+                                    <button onClick={() => setStep(3)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                        Voltar e Tentar Novamente
+                                    </button>
                                 </div>
                             </div>
                         )}
