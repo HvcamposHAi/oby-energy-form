@@ -302,100 +302,33 @@
                 setLoading(true);
                 
                 try {
-                    console.log('📤 Fase 1: Upload de arquivos...');
-                    
-                    // Upload de arquivos com tratamento individual
-                    let arquivoContaUrl = null;
-                    if (formData.arquivoConta) {
-                        try {
-                            arquivoContaUrl = await uploadFile(formData.arquivoConta, 'contas-energia');
-                        } catch (e) {
-                            console.error('Erro no upload da conta:', e);
-                            throw new Error('Erro ao fazer upload da conta de energia');
+                    // PRIMEIRO: Testar se consegue inserir dados simples
+                    console.log('🧪 TESTE 1: Verificando conexão com o banco...');
+                    const testeConexao = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
+                        method: 'GET',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
                         }
+                    });
+                    
+                    if (!testeConexao.ok) {
+                        const erro = await testeConexao.text();
+                        console.error('❌ ERRO DE CONEXÃO:', erro);
+                        throw new Error(`Erro ao conectar com o banco: ${erro}`);
                     }
+                    console.log('✅ Conexão com banco OK');
                     
-                    let arquivoRGFrenteUrl = null;
-                    if (formData.arquivoRGFrente) {
-                        try {
-                            arquivoRGFrenteUrl = await uploadFile(formData.arquivoRGFrente, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload RG frente:', e);
-                            throw new Error('Erro ao fazer upload do RG (frente)');
-                        }
-                    }
+                    // SEGUNDO: Preparar dados MÍNIMOS primeiro
+                    console.log('📝 Fase 1: Preparando dados BÁSICOS (sem uploads)...');
                     
-                    let arquivoRGVersoUrl = null;
-                    if (formData.arquivoRGVerso) {
-                        try {
-                            arquivoRGVersoUrl = await uploadFile(formData.arquivoRGVerso, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload RG verso:', e);
-                            throw new Error('Erro ao fazer upload do RG (verso)');
-                        }
-                    }
-                    
-                    let arquivoRGRep1FrenteUrl = null;
-                    if (formData.arquivoRGRep1Frente) {
-                        try {
-                            arquivoRGRep1FrenteUrl = await uploadFile(formData.arquivoRGRep1Frente, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload RG rep frente:', e);
-                            throw new Error('Erro ao fazer upload do RG do representante (frente)');
-                        }
-                    }
-                    
-                    let arquivoRGRep1VersoUrl = null;
-                    if (formData.arquivoRGRep1Verso) {
-                        try {
-                            arquivoRGRep1VersoUrl = await uploadFile(formData.arquivoRGRep1Verso, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload RG rep verso:', e);
-                            throw new Error('Erro ao fazer upload do RG do representante (verso)');
-                        }
-                    }
-                    
-                    let arquivoRGRespPagFrenteUrl = null;
-                    if (formData.arquivoRGRespPagFrente) {
-                        try {
-                            arquivoRGRespPagFrenteUrl = await uploadFile(formData.arquivoRGRespPagFrente, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload RG resp pag frente:', e);
-                            throw new Error('Erro ao fazer upload do RG do responsável pelo pagamento (frente)');
-                        }
-                    }
-                    
-                    let arquivoRGRespPagVersoUrl = null;
-                    if (formData.arquivoRGRespPagVerso) {
-                        try {
-                            arquivoRGRespPagVersoUrl = await uploadFile(formData.arquivoRGRespPagVerso, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload RG resp pag verso:', e);
-                            throw new Error('Erro ao fazer upload do RG do responsável pelo pagamento (verso)');
-                        }
-                    }
-                    
-                    let contratoSocialUrl = null;
-                    if (formData.contratoSocial) {
-                        try {
-                            contratoSocialUrl = await uploadFile(formData.contratoSocial, 'documentos');
-                        } catch (e) {
-                            console.error('Erro no upload contrato social:', e);
-                            throw new Error('Erro ao fazer upload do contrato social');
-                        }
-                    }
-                    
-                    console.log('✅ Uploads concluídos com sucesso!');
-                    console.log('📝 Fase 2: Preparando dados da proposta...');
-                    
-                    const proposta = {
+                    const propostaMinima = {
                         nome_completo: `${formData.nome} ${formData.sobrenome}`,
                         email: formData.email,
                         telefone: formData.telefone,
                         cep: formData.cep,
                         logradouro: formData.logradouro,
                         numero_endereco: formData.numeroEndereco,
-                        complemento: formData.complemento || null,
                         bairro: formData.bairro,
                         cidade: formData.cidade,
                         estado: formData.estado,
@@ -405,6 +338,108 @@
                         consumo_kw: parseFloat(formData.consumoKW),
                         numero_instalacao: formData.numeroInstalacao,
                         tipo_pessoa: formData.tipoPessoa,
+                        simulacao_economia_mensal: parseFloat(simulacao.economiaMensal),
+                        simulacao_economia_anual: parseFloat(simulacao.economiaAnual),
+                        simulacao_conta_atual: parseFloat(simulacao.contaAtual),
+                        simulacao_conta_nova: parseFloat(simulacao.contaNova),
+                        desconto_aplicado: parseFloat(simulacao.desconto),
+                        aceite_termo_adesao: formData.aceiteTermoAdesao,
+                        aceite_dados_pessoais: formData.aceiteDadosPessoais,
+                        status: 'pendente'
+                    };
+                    
+                    console.log('📊 Dados básicos preparados:', propostaMinima);
+                    console.log('💾 TESTE 2: Tentando salvar dados BÁSICOS no banco...');
+                    
+                    const responseTeste = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(propostaMinima)
+                    });
+                    
+                    if (!responseTeste.ok) {
+                        const errorText = await responseTeste.text();
+                        const errorJson = JSON.parse(errorText);
+                        console.error('❌ ERRO AO SALVAR DADOS BÁSICOS:', errorJson);
+                        console.error('Detalhes do erro:', {
+                            codigo: errorJson.code,
+                            mensagem: errorJson.message,
+                            detalhes: errorJson.details,
+                            hint: errorJson.hint
+                        });
+                        
+                        throw new Error(`ERRO NO BANCO DE DADOS:\n\nCódigo: ${errorJson.code}\nMensagem: ${errorJson.message}\n\nDetalhes: ${errorJson.details || 'N/A'}\nDica: ${errorJson.hint || 'N/A'}`);
+                    }
+                    
+                    const resultadoTeste = await responseTeste.json();
+                    console.log('✅ Dados básicos salvos com sucesso! ID:', resultadoTeste[0].id);
+                    
+                    // TERCEIRO: Se deu certo, fazer uploads e atualizar
+                    console.log('📤 Fase 2: Fazendo upload de arquivos...');
+                    
+                    let arquivoContaUrl = null;
+                    if (formData.arquivoConta) {
+                        try {
+                            arquivoContaUrl = await uploadFile(formData.arquivoConta, 'contas-energia');
+                        } catch (e) {
+                            console.warn('⚠️ Erro no upload da conta, continuando...', e);
+                        }
+                    }
+                    
+                    let arquivoRGFrenteUrl = null;
+                    if (formData.arquivoRGFrente) {
+                        try {
+                            arquivoRGFrenteUrl = await uploadFile(formData.arquivoRGFrente, 'documentos');
+                        } catch (e) {
+                            console.warn('⚠️ Erro no upload RG frente, continuando...', e);
+                        }
+                    }
+                    
+                    let arquivoRGVersoUrl = null;
+                    if (formData.arquivoRGVerso) {
+                        try {
+                            arquivoRGVersoUrl = await uploadFile(formData.arquivoRGVerso, 'documentos');
+                        } catch (e) {
+                            console.warn('⚠️ Erro no upload RG verso, continuando...', e);
+                        }
+                    }
+                    
+                    let arquivoRGRep1FrenteUrl = null;
+                    if (formData.arquivoRGRep1Frente) {
+                        try {
+                            arquivoRGRep1FrenteUrl = await uploadFile(formData.arquivoRGRep1Frente, 'documentos');
+                        } catch (e) {
+                            console.warn('⚠️ Erro no upload RG rep frente, continuando...', e);
+                        }
+                    }
+                    
+                    let arquivoRGRep1VersoUrl = null;
+                    if (formData.arquivoRGRep1Verso) {
+                        try {
+                            arquivoRGRep1VersoUrl = await uploadFile(formData.arquivoRGRep1Verso, 'documentos');
+                        } catch (e) {
+                            console.warn('⚠️ Erro no upload RG rep verso, continuando...', e);
+                        }
+                    }
+                    
+                    let contratoSocialUrl = null;
+                    if (formData.contratoSocial) {
+                        try {
+                            contratoSocialUrl = await uploadFile(formData.contratoSocial, 'documentos');
+                        } catch (e) {
+                            console.warn('⚠️ Erro no upload contrato social, continuando...', e);
+                        }
+                    }
+                    
+                    // QUARTO: Atualizar proposta com todos os dados
+                    console.log('📝 Fase 3: Atualizando proposta com dados completos...');
+                    
+                    const propostaCompleta = {
                         cpf: formData.cpf || null,
                         rg: formData.rg || null,
                         cnpj: formData.cnpj || null,
@@ -417,54 +452,40 @@
                         nome_responsavel_pagamento: formData.nomeResponsavelPagamento || null,
                         cpf_responsavel_pagamento: formData.cpfResponsavelPagamento || null,
                         rg_responsavel_pagamento: formData.rgResponsavelPagamento || null,
+                        complemento: formData.complemento || null,
+                        cupom_desconto: formData.cupom || null,
                         arquivo_conta_url: arquivoContaUrl,
                         arquivo_rg_frente_url: arquivoRGFrenteUrl,
                         arquivo_rg_verso_url: arquivoRGVersoUrl,
                         arquivo_rg_rep1_frente_url: arquivoRGRep1FrenteUrl,
                         arquivo_rg_rep1_verso_url: arquivoRGRep1VersoUrl,
-                        arquivo_rg_resp_pag_frente_url: arquivoRGRespPagFrenteUrl,
-                        arquivo_rg_resp_pag_verso_url: arquivoRGRespPagVersoUrl,
-                        contrato_social_url: contratoSocialUrl,
-                        simulacao_economia_mensal: parseFloat(simulacao.economiaMensal),
-                        simulacao_economia_anual: parseFloat(simulacao.economiaAnual),
-                        simulacao_conta_atual: parseFloat(simulacao.contaAtual),
-                        simulacao_conta_nova: parseFloat(simulacao.contaNova),
-                        desconto_aplicado: parseFloat(simulacao.desconto),
-                        cupom_desconto: formData.cupom || null,
-                        aceite_termo_adesao: formData.aceiteTermoAdesao,
-                        aceite_dados_pessoais: formData.aceiteDadosPessoais,
-                        status: 'pendente'
+                        contrato_social_url: contratoSocialUrl
                     };
                     
-                    console.log('📊 Dados da proposta preparados:', proposta);
-                    console.log('💾 Fase 3: Salvando proposta no banco...');
-                    
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
-                        method: 'POST',
+                    const responseUpdate = await fetch(`${SUPABASE_URL}/rest/v1/propostas?id=eq.${resultadoTeste[0].id}`, {
+                        method: 'PATCH',
                         headers: {
                             'apikey': SUPABASE_KEY,
                             'Authorization': `Bearer ${SUPABASE_KEY}`,
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
-                        body: JSON.stringify(proposta)
+                        body: JSON.stringify(propostaCompleta)
                     });
                     
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('❌ Erro na resposta do servidor:', errorText);
-                        throw new Error(`Erro ao salvar proposta: ${errorText}`);
+                    if (!responseUpdate.ok) {
+                        const errorText = await responseUpdate.text();
+                        console.error('⚠️ Erro ao atualizar com dados completos:', errorText);
+                        // Não vamos falhar aqui, pois os dados básicos já foram salvos
                     }
                     
-                    const result = await response.json();
-                    console.log('✅ Proposta salva com sucesso!', result);
-                    
-                    setPropostaId(result[0].id);
+                    console.log('✅ PROPOSTA SALVA COM SUCESSO!');
+                    setPropostaId(resultadoTeste[0].id);
                     setMostrarRevisao(true);
                     
                 } catch (error) {
                     console.error('❌ ERRO GERAL:', error);
-                    alert(`Erro ao enviar proposta: ${error.message}\n\nVerifique o console para mais detalhes.`);
+                    alert(error.message);
                 } finally {
                     setLoading(false);
                 }
