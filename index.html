@@ -407,6 +407,13 @@
                     const resultadoTeste = await responseTeste.json();
                     console.log('✅ Dados básicos salvos com sucesso! ID:', resultadoTeste[0].id);
                     
+                    // Gerar número do contrato
+                    const propostaId = resultadoTeste[0].id;
+                    const anoAtual = new Date().getFullYear();
+                    const numeroFormatado = String(propostaId).padStart(5, '0');
+                    const numeroContrato = `OBY-${anoAtual}-${numeroFormatado}`;
+                    console.log('📋 Número do contrato gerado:', numeroContrato);
+                    
                     // TERCEIRO: Se deu certo, fazer uploads e atualizar
                     console.log('📤 Fase 2: Fazendo upload de arquivos...');
                     
@@ -468,6 +475,7 @@
                     console.log('📝 Fase 3: Atualizando proposta com dados completos...');
                     
                     const propostaCompleta = {
+                        numero_contrato: numeroContrato,
                         cpf: formData.cpf || null,
                         rg: formData.rg || null,
                         cnpj: formData.cnpj || null,
