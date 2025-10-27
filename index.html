@@ -407,11 +407,11 @@
                     const resultadoTeste = await responseTeste.json();
                     console.log('✅ Dados básicos salvos com sucesso! ID:', resultadoTeste[0].id);
                     
-                    // Gerar número do contrato
+                    // Gerar número do contrato (últimos 5 caracteres do ID)
                     const propostaId = resultadoTeste[0].id;
                     const anoAtual = new Date().getFullYear();
-                    const numeroFormatado = String(propostaId).padStart(5, '0');
-                    const numeroContrato = `OBY-${anoAtual}-${numeroFormatado}`;
+                    const idCurto = String(propostaId).slice(-5); // Pega últimos 5 caracteres
+                    const numeroContrato = `OBY-${anoAtual}-${idCurto}`;
                     console.log('📋 Número do contrato gerado:', numeroContrato);
                     
                     // TERCEIRO: Se deu certo, fazer uploads e atualizar
