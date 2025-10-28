@@ -41,6 +41,7 @@
             const [mostrarRevisao, setMostrarRevisao] = useState(false);
             const [propostaId, setPropostaId] = useState(null);
             const [vendedoresLista, setVendedoresLista] = useState([]); // NOVO ESTADO
+            const [loadingVendedores, setLoadingVendedores] = useState(true); // NOVO ESTADO
             const [formData, setFormData] = useState({
                 cep: '', nome: '', sobrenome: '', cupom: '', 
                 email: '', telefone: '',
@@ -73,7 +74,9 @@
 
             // NOVO: Carregar lista de vendedores
             const carregarVendedoresLista = async () => {
+                setLoadingVendedores(true);
                 try {
+                    // Filtra apenas vendedores ativos
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/vendedores?select=id,nome_completo&status=eq.ativo&order=nome_completo.asc`, {
                         headers: {
                             'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -88,7 +91,9 @@
                     }
                 } catch (error) {
                     console.log('ℹ️ Tabela de vendedores ainda não existe ou erro de conexão.');
-                }
+                } finally {
+                    setLoadingVendedores(false);
+                }
             };
 
             // Carregar desconto e lista de vendedores ao iniciar
@@ -397,7 +402,7 @@
                         aceite_termo_adesao: formData.aceiteTermoAdesao,
                         aceite_dados_pessoais: formData.aceiteDadosPessoais,
                         status: 'pendente',
-                        vendedor_id: formData.vendedor_id // NOVO CAMPO INSERIDO
+                        vendedor_id: formData.vendedor_id // CAMPO INSERIDO
                     };
                     
                     console.log('📊 Dados básicos preparados:', propostaMinima);
@@ -852,7 +857,7 @@
                                     {formData.cupom && <p className="text-green-600 text-sm mt-1">✓ Desconto de 20%!</p>}
                                 </div>
                                 
-                                {/* NOVO CAMPO: VENDEDOR */}
+                                {/* CAMPO LISTBOX VENDEDOR (CORRIGIDO CIRURGICAMENTE) */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Vendedor (Opcional)</label>
                                     <select 
@@ -860,8 +865,11 @@
                                         value={formData.vendedor_id || ''} 
                                         onChange={handleInputChange} 
                                         className="w-full p-3 border rounded-lg border-gray-300"
+                                        disabled={loadingVendedores}
                                     >
-                                        <option value="">Nenhum Vendedor</option>
+                                        <option value="">
+                                            {loadingVendedores ? 'Carregando vendedores...' : 'Selecione um Vendedor (Opcional)'}
+                                        </option>
                                         {vendedoresLista.map(vendedor => (
                                             <option key={vendedor.id} value={vendedor.id}>
                                                 {vendedor.nome_completo}
@@ -880,200 +888,3 @@
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Logradouro *</label>
                                     <input type="text" name="logradouro" value={formData.logradouro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.logradouro ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.logradouro && <p className="text-red-500 text-sm mt-1">{errors.logradouro}</p>}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Número *</label>
-                                        <input type="text" name="numeroEndereco" value={formData.numeroEndereco} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroEndereco ? 'border-red-500' : 'border-gray-300'}`} />
-                                        {errors.numeroEndereco && <p className="text-red-500 text-sm mt-1">{errors.numeroEndereco}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Complemento</label>
-                                        <input type="text" name="complemento" value={formData.complemento} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Bairro *</label>
-                                    <input type="text" name="bairro" value={formData.bairro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.bairro ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.bairro && <p className="text-red-500 text-sm mt-1">{errors.bairro}</p>}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Cidade</label>
-                                        <input type="text" name="cidade" value={formData.cidade} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Estado</label>
-                                        <input type="text" name="estado" value={formData.estado} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 3 && (
-                            <div className="space-y-6">
-                                <div className="bg-green-50 p-4 rounded-lg mb-4">
-                                    <p className="text-sm text-green-800">⚡ Qualificação da Instalação</p>
-                                </div>
-                                <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6 mb-6">
-                                    <h3 className="text-lg font-bold text-blue-800 mb-4">
-                                        <span className="text-2xl mr-2">📄</span>
-                                        Como encontrar essas informações na sua conta da COPEL
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-1.png" alt="Guia" className="w-full rounded-lg" />
-                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-2.png" alt="Guia" className="w-full rounded-lg" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Modalidade Tarifária *</label>
-                                    <select name="modalidadeTarifaria" value={formData.modalidadeTarifaria} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.modalidadeTarifaria ? 'border-red-500' : 'border-gray-300'}`}>
-                                        <option value="">Selecione...</option>
-                                        <option value="Convencional">Convencional</option>
-                                        <option value="Branca">Branca</option>
-                                        <option value="Azul">Azul</option>
-                                        <option value="Verde">Verde</option>
-                                    </select>
-                                    {errors.modalidadeTarifaria && <p className="text-red-500 text-sm mt-1">{errors.modalidadeTarifaria}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Distribuidora *</label>
-                                    <input type="text" name="distribuidoraEnergia" value={formData.distribuidoraEnergia} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.distribuidoraEnergia ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.distribuidoraEnergia && <p className="text-red-500 text-sm mt-1">{errors.distribuidoraEnergia}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Tipo de Conexão *</label>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {['trifasico', 'bifasico', 'monofasico'].map((tipo) => (
-                                            <button key={tipo} type="button" onClick={() => setFormData(prev => ({ ...prev, tipoConexao: tipo }))} className={`p-4 rounded-lg border-2 ${formData.tipoConexao === tipo ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
-                                                {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-                                                <div className="text-xs text-gray-600 mt-1">Mín: {consumoMinimo[tipo]} kW</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {errors.tipoConexao && <p className="text-red-500 text-sm mt-1">{errors.tipoConexao}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Consumo Mensal (kW) *</label>
-                                    <input type="number" name="consumoKW" value={formData.consumoKW} onChange={handleInputChange} placeholder="Ex: 250" className={`w-full p-3 border rounded-lg ${errors.consumoKW ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.consumoKW && <p className="text-red-500 text-sm mt-1">{errors.consumoKW}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Número da Instalação *</label>
-                                    <input type="text" name="numeroInstalacao" value={formData.numeroInstalacao} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroInstalacao ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.numeroInstalacao && <p className="text-red-500 text-sm mt-1">{errors.numeroInstalacao}</p>}
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 4 && simulacao && (
-                            <div className="space-y-6">
-                                <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center">
-                                    <h3 className="text-xl font-semibold mb-3">Sua Economia Mensal com Energia</h3>
-                                    <p className="text-6xl font-bold mb-3">R$ {formatBRL(simulacao.economiaMensal)}</p>
-                                    <p className="text-lg">Desconto de até {simulacao.desconto}% *</p>
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4 p-4 border-2 border-red-500 rounded-lg">
-                                            <div>
-                                                <h4 className="text-center font-bold text-blue-800 mb-3">Conta Atual</h4>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span>Consumo Mínimo</span>
-                                                        <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Impostos Não Compensáveis</span>
-                                                        <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Energia Cativa</span>
-                                                        <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                                    </div>
-                                                    <div className="border-t pt-1 flex justify-between font-bold">
-                                                        <span>Total</span>
-                                                        <span>R$ {formatBRL(simulacao.contaAtual)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-center font-bold text-green-800 mb-3">Com a Oby</h4>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span>Consumo Mínimo</span>
-                                                        <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Impostos Não Compensáveis</span>
-                                                        <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Energia Cativa</span>
-                                                        <span>R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
-                                                    </div>
-                                                    <div className="border-t-2 border-green-300 pt-2 flex justify-between font-bold text-green-700">
-                                                        <span>Total</span>
-                                                        <span>R$ {formatBRL(simulacao.contaNova)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Resumo da Economia */}
-                                        <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
-                                            <h3 className="font-semibold mb-3">💰 Resumo da Economia</h3>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span>Economia Mensal:</span>
-                                                    <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Economia Anual:</span>
-                                                    <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Equivalente a pagar por ano:</span>
-                                                    <span className="font-bold text-blue-600">{simulacao.contasPorAno} contas</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-4 bg-yellow-50 p-3 rounded-lg">
-                                            <p className="text-xs text-yellow-800">
-                                                <strong>Observação:</strong> Os valores apresentados são estimativas baseadas nas informações fornecidas. 
-                                                A economia real pode variar conforme o consumo mensal e as bandeiras tarifárias vigentes.
-                                            </p>
-                                        </div>
-                                    </div>
-                            </div>
-
-                            {/* Botões de navegação e submissão (MANTIDOS) */}
-                            <div className="flex justify-between mt-8 pt-6 border-t">
-                                {step > 1 && (
-                                    <button onClick={() => setStep(step - 1)} disabled={loading} className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50">
-                                        Voltar
-                                    </button>
-                                )}
-                                <div className="flex-1"></div>
-                                {step < 5 ? (
-                                    <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                                        Prosseguir
-                                    </button>
-                                ) : (
-                                    <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
-                                        {loading ? '⏳ Enviando arquivos e dados...' : 'Enviar Proposta'}
-                                    </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        ReactDOM.render(<EnergyContractForm />, document.getElementById('root'));
-    </script>
-</body>
-</html>
