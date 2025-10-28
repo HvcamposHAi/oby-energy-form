@@ -41,6 +41,7 @@
             const [mostrarRevisao, setMostrarRevisao] = useState(false);
             const [propostaId, setPropostaId] = useState(null);
             const [formData, setFormData] = useState({
+                vendedor: '', // NOVO CAMPO
                 cep: '', nome: '', sobrenome: '', cupom: '', 
                 email: '', telefone: '',
                 logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
@@ -64,8 +65,10 @@
             const [simulacao, setSimulacao] = useState(null);
             const [cepValidado, setCepValidado] = useState(false);
             const [estadoForaCobertura, setEstadoForaCobertura] = useState(false);
-            const [descontoPercentual, setDescontoPercentual] = useState(15); // Estado para desconto dinâmico
+            const [descontoPercentual, setDescontoPercentual] = useState(15);
             const [loadingDesconto, setLoadingDesconto] = useState(true);
+            const [vendedores, setVendedores] = useState([]); // NOVO STATE
+            const [loadingVendedores, setLoadingVendedores] = useState(true); // NOVO STATE
 
             const consumoMinimo = { trifasico: 100, bifasico: 50, monofasico: 30 };
 
@@ -93,6 +96,31 @@
                     }
                 };
                 carregarDescontoPercentual();
+            }, []);
+
+            // NOVO: Carregar vendedores do banco
+            useEffect(() => {
+                const carregarVendedores = async () => {
+                    setLoadingVendedores(true);
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/vendedores?select=id,nome`, {
+                            headers: {
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'apikey': SUPABASE_KEY
+                            }
+                        });
+                        const data = await response.json();
+                        if (data && Array.isArray(data)) {
+                            setVendedores(data);
+                            console.log('✅ Vendedores carregados:', data.length);
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro ao carregar vendedores:', error);
+                    } finally {
+                        setLoadingVendedores(false);
+                    }
+                };
+                carregarVendedores();
             }, []);
 
             const handleInputChange = (e) => {
@@ -152,6 +180,7 @@
                 const newErrors = {};
                 
                 if (step === 1) {
+                    if (!formData.vendedor) newErrors.vendedor = 'Campo obrigatório'; // NOVA VALIDAÇÃO
                     if (!formData.cep) newErrors.cep = 'Campo obrigatório';
                     if (!formData.nome) newErrors.nome = 'Campo obrigatório';
                     if (!formData.sobrenome) newErrors.sobrenome = 'Campo obrigatório';
@@ -215,9 +244,7 @@
                 return Object.keys(newErrors).length === 0;
             };
 
-            // CÁLCULO ORIGINAL QUE FUNCIONAVA
             const calcularSimulacao = async () => {
-                // Buscar configurações do banco de dados
                 let tarifaTotal = 0.842355;
                 let proporcaoEnergia = 0.81;
                 let proporcaoImpostos = 0.19;
@@ -242,7 +269,7 @@
 
                 const consumo = parseFloat(formData.consumoKW);
                 const minimo = consumoMinimo[formData.tipoConexao];
-                const desconto = descontoPercentual / 100; // Usa o desconto dinâmico do banco
+                const desconto = descontoPercentual / 100;
                 
                 const tarifaEnergia = tarifaTotal * proporcaoEnergia;
                 const tarifaImpostos = tarifaTotal * proporcaoImpostos;
@@ -330,7 +357,6 @@
                 setLoading(true);
                 
                 try {
-                    // PRIMEIRO: Testar se consegue inserir dados simples
                     console.log('🧪 TESTE 1: Verificando conexão com o banco...');
                     const testeConexao = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
                         method: 'GET',
@@ -347,39 +373,82 @@
                     }
                     console.log('✅ Conexão com banco OK');
                     
-                    // SEGUNDO: Preparar dados MÍNIMOS primeiro
-                    console.log('📝 Fase 1: Preparando dados BÁSICOS (sem uploads)...');
+                    console.log('📤 Iniciando uploads de arquivos...');
+                    let contaUrl = null, rgFrenteUrl = null, rgVersoUrl = null;
+                    let rgRep1FrenteUrl = null, rgRep1VersoUrl = null, contratoSocialUrl = null;
+                    let rgRespPagFrenteUrl = null, rgRespPagVersoUrl = null;
                     
-                    const propostaMinima = {
-                        nome_completo: `${formData.nome} ${formData.sobrenome}`,
+                    if (formData.arquivoConta) contaUrl = await uploadFile(formData.arquivoConta, 'contas');
+                    
+                    if (formData.tipoPessoa === 'fisica') {
+                        if (formData.arquivoRGFrente) rgFrenteUrl = await uploadFile(formData.arquivoRGFrente, 'documentos');
+                        if (formData.arquivoRGVerso) rgVersoUrl = await uploadFile(formData.arquivoRGVerso, 'documentos');
+                    } else {
+                        if (formData.arquivoRGRep1Frente) rgRep1FrenteUrl = await uploadFile(formData.arquivoRGRep1Frente, 'documentos');
+                        if (formData.arquivoRGRep1Verso) rgRep1VersoUrl = await uploadFile(formData.arquivoRGRep1Verso, 'documentos');
+                        if (formData.contratoSocial) contratoSocialUrl = await uploadFile(formData.contratoSocial, 'documentos');
+                    }
+                    
+                    if (formData.temResponsavelPagamento) {
+                        if (formData.arquivoRGRespPagFrente) rgRespPagFrenteUrl = await uploadFile(formData.arquivoRGRespPagFrente, 'documentos');
+                        if (formData.arquivoRGRespPagVerso) rgRespPagVersoUrl = await uploadFile(formData.arquivoRGRespPagVerso, 'documentos');
+                    }
+                    
+                    console.log('✅ Uploads concluídos!');
+                    
+                    const proposta = {
+                        vendedor_id: formData.vendedor, // NOVO CAMPO SALVO NO BANCO
+                        nome: formData.nome,
+                        sobrenome: formData.sobrenome,
                         email: formData.email,
                         telefone: formData.telefone,
                         cep: formData.cep,
                         logradouro: formData.logradouro,
                         numero_endereco: formData.numeroEndereco,
+                        complemento: formData.complemento,
                         bairro: formData.bairro,
                         cidade: formData.cidade,
                         estado: formData.estado,
                         modalidade_tarifaria: formData.modalidadeTarifaria,
-                        distribuidora_energia: formData.distribuidoraEnergia,
+                        distribuidora: formData.distribuidoraEnergia,
                         tipo_conexao: formData.tipoConexao,
-                        consumo_kw: parseFloat(formData.consumoKW),
+                        consumo_kwh: parseFloat(formData.consumoKW),
                         numero_instalacao: formData.numeroInstalacao,
+                        arquivo_conta_url: contaUrl,
                         tipo_pessoa: formData.tipoPessoa,
-                        simulacao_economia_mensal: parseFloat(simulacao.economiaMensal),
-                        simulacao_economia_anual: parseFloat(simulacao.economiaAnual),
-                        simulacao_conta_atual: parseFloat(simulacao.contaAtual),
-                        simulacao_conta_nova: parseFloat(simulacao.contaNova),
-                        desconto_aplicado: parseFloat(simulacao.desconto),
+                        cpf: formData.cpf,
+                        rg: formData.rg,
+                        rg_frente_url: rgFrenteUrl,
+                        rg_verso_url: rgVersoUrl,
+                        cnpj: formData.cnpj,
+                        nome_fantasia: formData.nomeFantasia,
+                        razao_social: formData.razaoSocial,
+                        representante_legal_1: formData.representanteLegal1,
+                        cpf_representante_1: formData.cpfRepresentante1,
+                        rg_representante_1: formData.rgRepresentante1,
+                        rg_rep1_frente_url: rgRep1FrenteUrl,
+                        rg_rep1_verso_url: rgRep1VersoUrl,
+                        contrato_social_url: contratoSocialUrl,
+                        tem_responsavel_pagamento: formData.temResponsavelPagamento,
+                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento,
+                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento,
+                        rg_responsavel_pagamento: formData.rgResponsavelPagamento,
+                        rg_resp_pag_frente_url: rgRespPagFrenteUrl,
+                        rg_resp_pag_verso_url: rgRespPagVersoUrl,
                         aceite_termo_adesao: formData.aceiteTermoAdesao,
                         aceite_dados_pessoais: formData.aceiteDadosPessoais,
-                        status: 'pendente'
+                        cupom: formData.cupom,
+                        simulacao_economia_mensal: parseFloat(simulacao.economiaMensal),
+                        simulacao_economia_anual: parseFloat(simulacao.economiaAnual),
+                        simulacao_desconto_percentual: parseFloat(simulacao.desconto),
+                        simulacao_conta_atual: parseFloat(simulacao.contaAtual),
+                        simulacao_conta_nova: parseFloat(simulacao.contaNova),
+                        status: 'pendente',
+                        data_criacao: new Date().toISOString()
                     };
                     
-                    console.log('📊 Dados básicos preparados:', propostaMinima);
-                    console.log('💾 TESTE 2: Tentando salvar dados BÁSICOS no banco...');
-                    
-                    const responseTeste = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
+                    console.log('💾 Salvando proposta no banco...');
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
                         method: 'POST',
                         headers: {
                             'apikey': SUPABASE_KEY,
@@ -387,141 +456,23 @@
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
-                        body: JSON.stringify(propostaMinima)
+                        body: JSON.stringify(proposta)
                     });
                     
-                    if (!responseTeste.ok) {
-                        const errorText = await responseTeste.text();
-                        const errorJson = JSON.parse(errorText);
-                        console.error('❌ ERRO AO SALVAR DADOS BÁSICOS:', errorJson);
-                        console.error('Detalhes do erro:', {
-                            codigo: errorJson.code,
-                            mensagem: errorJson.message,
-                            detalhes: errorJson.details,
-                            hint: errorJson.hint
-                        });
-                        
-                        throw new Error(`ERRO NO BANCO DE DADOS:\n\nCódigo: ${errorJson.code}\nMensagem: ${errorJson.message}\n\nDetalhes: ${errorJson.details || 'N/A'}\nDica: ${errorJson.hint || 'N/A'}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Erro ao salvar proposta:', errorText);
+                        throw new Error(`Erro ao salvar proposta: ${errorText}`);
                     }
                     
-                    const resultadoTeste = await responseTeste.json();
-                    console.log('✅ Dados básicos salvos com sucesso! ID:', resultadoTeste[0].id);
-                    
-                    // Gerar número do contrato (últimos 5 caracteres do ID)
-                    const propostaId = resultadoTeste[0].id;
-                    const anoAtual = new Date().getFullYear();
-                    const idCurto = String(propostaId).slice(-5); // Pega últimos 5 caracteres
-                    const numeroContrato = `OBY-${anoAtual}-${idCurto}`;
-                    console.log('📋 Número do contrato gerado:', numeroContrato);
-                    
-                    // TERCEIRO: Se deu certo, fazer uploads e atualizar
-                    console.log('📤 Fase 2: Fazendo upload de arquivos...');
-                    
-                    let arquivoContaUrl = null;
-                    if (formData.arquivoConta) {
-                        try {
-                            arquivoContaUrl = await uploadFile(formData.arquivoConta, 'contas-energia');
-                        } catch (e) {
-                            console.warn('⚠️ Erro no upload da conta, continuando...', e);
-                        }
-                    }
-                    
-                    let arquivoRGFrenteUrl = null;
-                    if (formData.arquivoRGFrente) {
-                        try {
-                            arquivoRGFrenteUrl = await uploadFile(formData.arquivoRGFrente, 'documentos');
-                        } catch (e) {
-                            console.warn('⚠️ Erro no upload RG frente, continuando...', e);
-                        }
-                    }
-                    
-                    let arquivoRGVersoUrl = null;
-                    if (formData.arquivoRGVerso) {
-                        try {
-                            arquivoRGVersoUrl = await uploadFile(formData.arquivoRGVerso, 'documentos');
-                        } catch (e) {
-                            console.warn('⚠️ Erro no upload RG verso, continuando...', e);
-                        }
-                    }
-                    
-                    let arquivoRGRep1FrenteUrl = null;
-                    if (formData.arquivoRGRep1Frente) {
-                        try {
-                            arquivoRGRep1FrenteUrl = await uploadFile(formData.arquivoRGRep1Frente, 'documentos');
-                        } catch (e) {
-                            console.warn('⚠️ Erro no upload RG rep frente, continuando...', e);
-                        }
-                    }
-                    
-                    let arquivoRGRep1VersoUrl = null;
-                    if (formData.arquivoRGRep1Verso) {
-                        try {
-                            arquivoRGRep1VersoUrl = await uploadFile(formData.arquivoRGRep1Verso, 'documentos');
-                        } catch (e) {
-                            console.warn('⚠️ Erro no upload RG rep verso, continuando...', e);
-                        }
-                    }
-                    
-                    let contratoSocialUrl = null;
-                    if (formData.contratoSocial) {
-                        try {
-                            contratoSocialUrl = await uploadFile(formData.contratoSocial, 'documentos');
-                        } catch (e) {
-                            console.warn('⚠️ Erro no upload contrato social, continuando...', e);
-                        }
-                    }
-                    
-                    // QUARTO: Atualizar proposta com todos os dados
-                    console.log('📝 Fase 3: Atualizando proposta com dados completos...');
-                    
-                    const propostaCompleta = {
-                        numero_contrato: numeroContrato,
-                        cpf: formData.cpf || null,
-                        rg: formData.rg || null,
-                        cnpj: formData.cnpj || null,
-                        nome_fantasia: formData.nomeFantasia || null,
-                        razao_social: formData.razaoSocial || null,
-                        representante_legal_1: formData.representanteLegal1 || null,
-                        cpf_representante_1: formData.cpfRepresentante1 || null,
-                        rg_representante_1: formData.rgRepresentante1 || null,
-                        tem_responsavel_pagamento: formData.temResponsavelPagamento,
-                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento || null,
-                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento || null,
-                        rg_responsavel_pagamento: formData.rgResponsavelPagamento || null,
-                        complemento: formData.complemento || null,
-                        cupom_desconto: formData.cupom || null,
-                        arquivo_conta_url: arquivoContaUrl,
-                        arquivo_rg_frente_url: arquivoRGFrenteUrl,
-                        arquivo_rg_verso_url: arquivoRGVersoUrl,
-                        arquivo_rg_rep1_frente_url: arquivoRGRep1FrenteUrl,
-                        arquivo_rg_rep1_verso_url: arquivoRGRep1VersoUrl,
-                        contrato_social_url: contratoSocialUrl
-                    };
-                    
-                    const responseUpdate = await fetch(`${SUPABASE_URL}/rest/v1/propostas?id=eq.${resultadoTeste[0].id}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json',
-                            'Prefer': 'return=representation'
-                        },
-                        body: JSON.stringify(propostaCompleta)
-                    });
-                    
-                    if (!responseUpdate.ok) {
-                        const errorText = await responseUpdate.text();
-                        console.error('⚠️ Erro ao atualizar com dados completos:', errorText);
-                        // Não vamos falhar aqui, pois os dados básicos já foram salvos
-                    }
-                    
-                    console.log('✅ PROPOSTA SALVA COM SUCESSO!');
-                    setPropostaId(resultadoTeste[0].id);
+                    const resultado = await response.json();
+                    console.log('✅ PROPOSTA SALVA COM SUCESSO!', resultado);
+                    setPropostaId(resultado[0].id);
                     setMostrarRevisao(true);
                     
                 } catch (error) {
                     console.error('❌ ERRO GERAL:', error);
-                    alert(error.message);
+                    alert('Erro ao enviar proposta: ' + error.message);
                 } finally {
                     setLoading(false);
                 }
@@ -543,7 +494,6 @@
                                 <p className="text-gray-600 mt-2">Sua proposta foi registrada com sucesso em nosso sistema</p>
                             </div>
 
-                            {/* Resumo da Economia */}
                             <div className="bg-gradient-to-r from-green-100 to-blue-100 p-6 rounded-xl mb-6">
                                 <div className="grid grid-cols-3 gap-6 text-center">
                                     <div>
@@ -561,7 +511,6 @@
                                 </div>
                             </div>
 
-                            {/* Dados do Cliente */}
                             <div className="border rounded-lg p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">📋</span> Dados do Cliente
@@ -595,7 +544,6 @@
                                 </div>
                             </div>
 
-                            {/* Dados da Instalação */}
                             <div className="border rounded-lg p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">⚡</span> Dados da Instalação
@@ -624,13 +572,11 @@
                                 </div>
                             </div>
 
-                            {/* Memória de Cálculo */}
                             <div className="border rounded-lg p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">🧮</span> Memória de Cálculo Detalhada
                                 </h2>
                                 
-                                {/* Base do Consumo */}
                                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                                     <h3 className="font-semibold mb-3">📊 Base do Cálculo</h3>
                                     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -653,7 +599,6 @@
                                     </div>
                                 </div>
 
-                                {/* Conta Atual vs Conta com Oby */}
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div className="border-2 border-red-200 rounded-lg p-4">
                                         <h3 className="font-semibold text-center mb-3 text-red-700">Conta Atual</h3>
@@ -700,7 +645,6 @@
                                     </div>
                                 </div>
 
-                                {/* Resumo da Economia */}
                                 <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
                                     <h3 className="font-semibold mb-3">💰 Resumo da Economia</h3>
                                     <div className="space-y-2 text-sm">
@@ -727,7 +671,6 @@
                                 </div>
                             </div>
 
-                            {/* Próximos Passos */}
                             <div className="border rounded-lg p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">📌</span> Próximos Passos
@@ -749,7 +692,6 @@
                                 </div>
                             </div>
 
-                            {/* Botões */}
                             <div className="mt-8 flex gap-4 justify-center no-print">
                                 <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                     🖨️ Imprimir
@@ -767,36 +709,62 @@
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
                     <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
                         <div className="text-center mb-8">
-                            <div className="flex justify-center mb-4">
-                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-20 w-auto" />
-                            </div>
-                            <h2 className="text-xl text-gray-600">Energia Renovável com Desconto</h2>
+                            <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="OBY Energy" className="h-20 w-auto mx-auto mb-4" />
+                            <h1 className="text-3xl font-bold text-gray-800">Proposta de Contratação</h1>
+                            <p className="text-gray-600 mt-2">Preencha os dados para simular sua economia</p>
                         </div>
 
-                        <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center justify-between mb-8">
                             {[1, 2, 3, 4, 5].map((s) => (
-                                <div key={s} className="flex items-center flex-1">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${s <= step ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'}`}>{s}</div>
-                                    {s < 5 && <div className={`flex-1 h-1 mx-2 ${s < step ? 'bg-blue-600' : 'bg-gray-300'}`} />}
+                                <div key={s} className="flex items-center">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= s ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                        {s}
+                                    </div>
+                                    {s < 5 && <div className={`w-12 h-1 ${step > s ? 'bg-blue-600' : 'bg-gray-200'}`}></div>}
                                 </div>
                             ))}
                         </div>
 
                         {step === 1 && (
                             <div className="space-y-6">
-                                <div className="bg-blue-50 p-4 rounded-lg">
-                                    <p className="text-sm text-blue-800">⚡ 100% Renovável | Sem obras | Desconto de {descontoPercentual}%</p>
+                                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                                    <p className="text-sm text-blue-800">👤 Informações do Cliente</p>
                                 </div>
+                                
+                                {/* NOVO CAMPO: Vendedor */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Vendedor *</label>
+                                    {loadingVendedores ? (
+                                        <div className="w-full p-3 border rounded-lg border-gray-300 bg-gray-50 text-gray-500">
+                                            Carregando vendedores...
+                                        </div>
+                                    ) : (
+                                        <select 
+                                            name="vendedor" 
+                                            value={formData.vendedor} 
+                                            onChange={handleInputChange} 
+                                            className={`w-full p-3 border rounded-lg ${errors.vendedor ? 'border-red-500' : 'border-gray-300'}`}
+                                        >
+                                            <option value="">Selecione um vendedor...</option>
+                                            {vendedores.map((v) => (
+                                                <option key={v.id} value={v.id}>{v.nome}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                    {errors.vendedor && <p className="text-red-500 text-sm mt-1">{errors.vendedor}</p>}
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium mb-2">CEP *</label>
-                                    <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} onBlur={validateCEP} placeholder="00000-000" className={`w-full p-3 border rounded-lg ${errors.cep ? 'border-red-500' : 'border-gray-300'}`} />
+                                    <div className="flex gap-2">
+                                        <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className={`flex-1 p-3 border rounded-lg ${errors.cep ? 'border-red-500' : 'border-gray-300'}`} />
+                                        <button type="button" onClick={validateCEP} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Validar</button>
+                                    </div>
                                     {errors.cep && <p className="text-red-500 text-sm mt-1">{errors.cep}</p>}
-                                    {cepValidado && !errors.cep && !estadoForaCobertura && <p className="text-green-600 text-sm mt-1">✓ Disponibilidade confirmada!</p>}
                                     {estadoForaCobertura && (
-                                        <div className="bg-yellow-50 border border-yellow-400 p-3 rounded-lg mt-2">
-                                            <p className="text-yellow-800 text-sm font-medium">⚠️ Atenção</p>
-                                            <p className="text-yellow-700 text-sm mt-1">Atualmente só temos energia disponível para o Paraná.</p>
-                                        </div>
+                                        <p className="text-orange-600 text-sm mt-2 bg-orange-50 p-3 rounded-lg">
+                                            ⚠️ Atualmente não atendemos este estado. Você pode continuar, mas a proposta ficará pendente de análise.
+                                        </p>
                                     )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -1009,72 +977,26 @@
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div className="bg-green-100 p-4 rounded-lg border-2 border-green-400 text-center">
-                                            <p className="text-green-800 font-bold">
-                                                Sua economia equivale a pagar somente<br/>
-                                                <span className="text-2xl">{simulacao.contasPorAno} contas ao ano</span>
-                                            </p>
-                                        </div>
-
-                                        <div className="bg-yellow-50 border border-yellow-400 rounded-lg p-3">
-                                            <p className="text-xs text-yellow-800">* Desconto varia conforme tipo de conexão e bandeiras tarifárias</p>
-                                        </div>
                                     </div>
 
-                                    <div className="bg-white p-6 rounded-lg border-2 border-gray-300">
-                                        <h3 className="text-xl font-bold mb-4 text-center border-b pb-3">Dados de Entrada do Cadastro</h3>
-                                        <div className="mb-4">
-                                            <h4 className="font-bold mb-2">Base do Consumo Mínimo:</h4>
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="border-b">
-                                                        <th className="text-left py-2">Conexão</th>
-                                                        <th className="text-right py-2">Consumo Mínimo kWh</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>Monofásica</td>
-                                                        <td className="text-right">30</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Bifásica</td>
-                                                        <td className="text-right">50</td>
-                                                    </tr>
-                                                    <tr className={formData.tipoConexao === 'trifasico' ? 'bg-blue-100' : ''}>
-                                                        <td className="font-bold">Trifásica</td>
-                                                        <td className="text-right font-bold">100</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                                            <p className="text-center font-bold text-blue-800">
-                                                Consumo Médio Mensal:<br/>
-                                                <span className="text-2xl">{simulacao.consumoKW} kWh</span>
-                                            </p>
-                                        </div>
-                                        <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border">
-                                            <h4 className="font-semibold text-center mb-3 text-blue-800">📊 Resumo da Economia</h4>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span>Economia Mensal:</span>
-                                                    <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Economia Anual:</span>
-                                                    <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
-                                                </div>
-                                                <div className="flex justify-between border-t pt-2">
-                                                    <span>Tipo de Conexão:</span>
-                                                    <span className="font-bold capitalize">{simulacao.tipoConexao}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Desconto Aplicado:</span>
-                                                    <span className="font-bold text-blue-600">{simulacao.desconto}%</span>
-                                                </div>
+                                    <div className="bg-white border-2 border-green-500 p-6 rounded-lg">
+                                        <h4 className="text-xl font-bold text-green-700 mb-4 text-center">💰 Resumo da Economia</h4>
+                                        <div className="space-y-4">
+                                            <div className="bg-green-50 p-4 rounded-lg">
+                                                <p className="text-sm text-gray-600 mb-1">Economia Mensal</p>
+                                                <p className="text-3xl font-bold text-green-700">R$ {formatBRL(simulacao.economiaMensal)}</p>
                                             </div>
+                                            <div className="bg-blue-50 p-4 rounded-lg">
+                                                <p className="text-sm text-gray-600 mb-1">Economia Anual</p>
+                                                <p className="text-3xl font-bold text-blue-700">R$ {formatBRL(simulacao.economiaAnual)}</p>
+                                            </div>
+                                            <div className="bg-purple-50 p-4 rounded-lg">
+                                                <p className="text-sm text-gray-600 mb-1">Equivalente a pagar por ano</p>
+                                                <p className="text-3xl font-bold text-purple-700">{simulacao.contasPorAno} contas</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 text-xs text-gray-600 bg-yellow-50 p-3 rounded">
+                                            * Os valores são estimativas baseadas nas informações fornecidas
                                         </div>
                                     </div>
                                 </div>
@@ -1083,11 +1005,14 @@
 
                         {step === 5 && (
                             <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4 mb-6">
-                                    <button onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'fisica' }))} className={`p-6 rounded-lg border-2 ${formData.tipoPessoa === 'fisica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
+                                <div className="bg-purple-50 p-4 rounded-lg mb-4">
+                                    <p className="text-sm text-purple-800">📋 Documentação e Aceite</p>
+                                </div>
+                                <div className="flex gap-4 justify-center mb-6">
+                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'fisica' }))} className={`px-6 py-3 rounded-lg border-2 ${formData.tipoPessoa === 'fisica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
                                         Pessoa Física
                                     </button>
-                                    <button onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'juridica' }))} className={`p-6 rounded-lg border-2 ${formData.tipoPessoa === 'juridica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
+                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'juridica' }))} className={`px-6 py-3 rounded-lg border-2 ${formData.tipoPessoa === 'juridica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
                                         Pessoa Jurídica
                                     </button>
                                 </div>
@@ -1096,7 +1021,7 @@
                                     <>
                                         <div>
                                             <label className="block text-sm font-medium mb-2">CPF *</label>
-                                            <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" className={`w-full p-3 border rounded-lg ${errors.cpf ? 'border-red-500' : 'border-gray-300'}`} />
+                                            <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpf ? 'border-red-500' : 'border-gray-300'}`} />
                                             {errors.cpf && <p className="text-red-500 text-sm mt-1">{errors.cpf}</p>}
                                         </div>
                                         <div>
