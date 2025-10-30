@@ -98,24 +98,37 @@
                 carregarDescontoPercentual();
             }, []);
 
-            // NOVO: Carregar vendedores do banco
+            // ✅ CORRIGIDO: Carregar vendedores do banco com nome_completo
             useEffect(() => {
                 const carregarVendedores = async () => {
                     setLoadingVendedores(true);
                     try {
-                        const response = await fetch(`${SUPABASE_URL}/rest/v1/vendedores?select=id,nome`, {
+                        console.log('🔍 Buscando vendedores ativos...');
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/vendedores?select=id,nome_completo,codigo_vendedor&status=eq.ativo&order=nome_completo.asc`, {
                             headers: {
                                 'Authorization': `Bearer ${SUPABASE_KEY}`,
                                 'apikey': SUPABASE_KEY
                             }
                         });
+                        
+                        if (!response.ok) {
+                            console.error('❌ Erro na resposta:', response.status, response.statusText);
+                            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                        }
+                        
                         const data = await response.json();
+                        console.log('📊 Dados recebidos:', data);
+                        
                         if (data && Array.isArray(data)) {
                             setVendedores(data);
-                            console.log('✅ Vendedores carregados:', data.length);
+                            console.log(`✅ ${data.length} vendedores carregados com sucesso!`);
+                        } else {
+                            console.warn('⚠️ Resposta não é um array:', data);
+                            setVendedores([]);
                         }
                     } catch (error) {
                         console.error('❌ Erro ao carregar vendedores:', error);
+                        setVendedores([]);
                     } finally {
                         setLoadingVendedores(false);
                     }
@@ -731,7 +744,6 @@
                                     <p className="text-sm text-blue-800">👤 Informações do Cliente</p>
                                 </div>
                                 
-                                {/* NOVO CAMPO: Vendedor */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Vendedor *</label>
                                     {loadingVendedores ? (
@@ -747,7 +759,9 @@
                                         >
                                             <option value="">Selecione um vendedor...</option>
                                             {vendedores.map((v) => (
-                                                <option key={v.id} value={v.id}>{v.nome}</option>
+                                                <option key={v.id} value={v.id}>
+                                                    {v.codigo_vendedor ? `${v.codigo_vendedor} - ${v.nome_completo}` : v.nome_completo}
+                                                </option>
                                             ))}
                                         </select>
                                     )}
