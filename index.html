@@ -46,7 +46,7 @@
                 email: '', telefone: '',
                 logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
                 estado: '', cidade: '',
-                modalidadeTarifaria: '', distribuidoraEnergia: 'COPEL',
+                distribuidoraEnergia: 'COPEL',
                 arquivoConta: null, tipoConexao: '', consumoKW: '', 
                 numeroInstalacao: '',
                 tipoPessoa: 'fisica', cpf: '', rg: '', 
@@ -209,7 +209,6 @@
                 }
                 
                 if (step === 3) {
-                    if (!formData.modalidadeTarifaria) newErrors.modalidadeTarifaria = 'Campo obrigatório';
                     if (!formData.distribuidoraEnergia) newErrors.distribuidoraEnergia = 'Campo obrigatório';
                     if (!formData.tipoConexao) newErrors.tipoConexao = 'Campo obrigatório';
                     if (!formData.consumoKW) newErrors.consumoKW = 'Campo obrigatório';
@@ -422,7 +421,6 @@
                         bairro: formData.bairro,
                         cidade: formData.cidade,
                         estado: formData.estado,
-                        modalidade_tarifaria: formData.modalidadeTarifaria,
                         distribuidora: formData.distribuidoraEnergia,
                         tipo_conexao: formData.tipoConexao,
                         consumo_kwh: parseFloat(formData.consumoKW),
@@ -577,10 +575,6 @@
                                     <div>
                                         <p className="text-sm text-gray-600">Consumo Médio Mensal</p>
                                         <p className="font-semibold">{formData.consumoKW} kWh</p>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-600">Modalidade Tarifária</p>
-                                        <p className="font-semibold capitalize">{formData.modalidadeTarifaria}</p>
                                     </div>
                                 </div>
                             </div>
@@ -864,17 +858,6 @@
                                         <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-1.png" alt="Guia" className="w-full rounded-lg" />
                                         <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-2.png" alt="Guia" className="w-full rounded-lg" />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Modalidade Tarifária *</label>
-                                    <select name="modalidadeTarifaria" value={formData.modalidadeTarifaria} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.modalidadeTarifaria ? 'border-red-500' : 'border-gray-300'}`}>
-                                        <option value="">Selecione...</option>
-                                        <option value="Convencional">Convencional</option>
-                                        <option value="Branca">Branca</option>
-                                        <option value="Azul">Azul</option>
-                                        <option value="Verde">Verde</option>
-                                    </select>
-                                    {errors.modalidadeTarifaria && <p className="text-red-500 text-sm mt-1">{errors.modalidadeTarifaria}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Distribuidora *</label>
