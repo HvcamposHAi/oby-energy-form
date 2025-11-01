@@ -256,9 +256,8 @@
 
             const calcularSimulacao = async () => {
                 let tarifaTotal = 0.842355;
-                let tarifaEnergia = 0.682308; // ✅ NOVO: Valor já calculado (0,842355 × 0,81)
-                let tarifaImpostos = 0.160047; // ✅ NOVO: Valor já calculado (0,842355 × 0,19)
-                let consumoMinimoValor = 84.24;
+                let tarifaEnergia = 0.682308;
+                let tarifaImpostos = 0.160047;
                 
                 try {
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
@@ -271,9 +270,8 @@
                     
                     configs.forEach(config => {
                         if (config.chave === 'tarifa_kwh') tarifaTotal = parseFloat(config.valor);
-                        if (config.chave === 'proporcao_energia') tarifaEnergia = parseFloat(config.valor); // ✅ CORRIGIDO: Usar direto
-                        if (config.chave === 'proporcao_impostos') tarifaImpostos = parseFloat(config.valor); // ✅ CORRIGIDO: Usar direto
-                        if (config.chave === 'consumo_minimo_valor') consumoMinimoValor = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_energia') tarifaEnergia = parseFloat(config.valor);
+                        if (config.chave === 'proporcao_impostos') tarifaImpostos = parseFloat(config.valor);
                     });
                 } catch (error) {
                     console.log('Usando valores padrão');
@@ -283,9 +281,8 @@
                 const minimo = consumoMinimo[formData.tipoConexao];
                 const desconto = descontoPercentual / 100;
                 
-                // ✅ REMOVIDO: const tarifaEnergia = tarifaTotal * proporcaoEnergia;
-                // ✅ REMOVIDO: const tarifaImpostos = tarifaTotal * proporcaoImpostos;
-                // Agora tarifaEnergia e tarifaImpostos são usados diretamente do banco!
+                // ✅ CORRIGIDO: Calcular dinamicamente baseado no tipo de conexão
+                const consumoMinimoValor = minimo * tarifaTotal;
                 
                 const consumoExcedente = consumo - minimo;
                 const impostosNaoCompensaveis = consumoExcedente * tarifaImpostos;
