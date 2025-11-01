@@ -41,7 +41,7 @@
             const [mostrarRevisao, setMostrarRevisao] = useState(false);
             const [propostaId, setPropostaId] = useState(null);
             const [formData, setFormData] = useState({
-                vendedor: '', // NOVO CAMPO
+                vendedor: '',
                 cep: '', nome: '', sobrenome: '', cupom: '', 
                 email: '', telefone: '',
                 logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
@@ -67,12 +67,11 @@
             const [estadoForaCobertura, setEstadoForaCobertura] = useState(false);
             const [descontoPercentual, setDescontoPercentual] = useState(15);
             const [loadingDesconto, setLoadingDesconto] = useState(true);
-            const [vendedores, setVendedores] = useState([]); // NOVO STATE
-            const [loadingVendedores, setLoadingVendedores] = useState(true); // NOVO STATE
+            const [vendedores, setVendedores] = useState([]);
+            const [loadingVendedores, setLoadingVendedores] = useState(true);
 
             const consumoMinimo = { trifasico: 100, bifasico: 50, monofasico: 30 };
 
-            // Carregar desconto do banco ao iniciar
             useEffect(() => {
                 const carregarDescontoPercentual = async () => {
                     setLoadingDesconto(true);
@@ -98,7 +97,6 @@
                 carregarDescontoPercentual();
             }, []);
 
-            // ✅ CORRIGIDO: Carregar vendedores do banco com nome_completo
             useEffect(() => {
                 const carregarVendedores = async () => {
                     setLoadingVendedores(true);
@@ -193,7 +191,7 @@
                 const newErrors = {};
                 
                 if (step === 1) {
-                    if (!formData.vendedor) newErrors.vendedor = 'Campo obrigatório'; // NOVA VALIDAÇÃO
+                    if (!formData.vendedor) newErrors.vendedor = 'Campo obrigatório';
                     if (!formData.cep) newErrors.cep = 'Campo obrigatório';
                     if (!formData.nome) newErrors.nome = 'Campo obrigatório';
                     if (!formData.sobrenome) newErrors.sobrenome = 'Campo obrigatório';
@@ -260,6 +258,7 @@
                 let tarifaTotal = 0.842355;
                 let proporcaoEnergia = 0.81;
                 let proporcaoImpostos = 0.19;
+                let consumoMinimoValor = 84.24; // ✅ NOVO: Valor padrão
                 
                 try {
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
@@ -274,6 +273,7 @@
                         if (config.chave === 'tarifa_kwh') tarifaTotal = parseFloat(config.valor);
                         if (config.chave === 'proporcao_energia') proporcaoEnergia = parseFloat(config.valor);
                         if (config.chave === 'proporcao_impostos') proporcaoImpostos = parseFloat(config.valor);
+                        if (config.chave === 'consumo_minimo_valor') consumoMinimoValor = parseFloat(config.valor); // ✅ NOVO: Buscar do banco
                     });
                 } catch (error) {
                     console.log('Usando valores padrão');
@@ -286,7 +286,9 @@
                 const tarifaEnergia = tarifaTotal * proporcaoEnergia;
                 const tarifaImpostos = tarifaTotal * proporcaoImpostos;
                 
-                const consumoMinimoValor = minimo * tarifaTotal;
+                // ❌ REMOVIDO: const consumoMinimoValor = minimo * tarifaTotal;
+                // ✅ Agora consumoMinimoValor vem do banco!
+                
                 const consumoExcedente = consumo - minimo;
                 const impostosNaoCompensaveis = consumoExcedente * tarifaImpostos;
                 
@@ -409,7 +411,7 @@
                     console.log('✅ Uploads concluídos!');
                     
                     const proposta = {
-                        vendedor_id: formData.vendedor, // NOVO CAMPO SALVO NO BANCO
+                        vendedor_id: formData.vendedor,
                         nome: formData.nome,
                         sobrenome: formData.sobrenome,
                         email: formData.email,
