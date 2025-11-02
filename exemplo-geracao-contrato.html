@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplo - Geração de Contrato DOCX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bibliotecas para geração de DOCX -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-blue-600 mb-6">🧪 Teste de Geração de Contrato DOCX</h1>
+
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+            <p class="text-sm text-blue-700">
+                Este é um exemplo funcional da nova função de geração de contrato.
+                Clique no botão abaixo para gerar um contrato DOCX de exemplo.
+            </p>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-4">Dados do Cliente de Exemplo</h2>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="font-semibold">Nome:</span> João Silva Santos
+                </div>
+                <div>
+                    <span class="font-semibold">CPF:</span> 123.456.789-00
+                </div>
+                <div>
+                    <span class="font-semibold">Email:</span> joao@example.com
+                </div>
+                <div>
+                    <span class="font-semibold">Telefone:</span> (41) 99999-9999
+                </div>
+                <div class="col-span-2">
+                    <span class="font-semibold">Endereço:</span> Rua das Flores, 123, Centro, Curitiba - PR
+                </div>
+                <div>
+                    <span class="font-semibold">Consumo:</span> 250 kWh/mês
+                </div>
+                <div>
+                    <span class="font-semibold">Economia Mensal:</span> R$ 125,50
+                </div>
+            </div>
+        </div>
+
+        <button
+            id="btnGerar"
+            onclick="gerarContratoExemplo()"
+            class="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-lg"
+        >
+            📄 Gerar Contrato DOCX (Exemplo)
+        </button>
+
+        <div id="status" class="mt-4 hidden">
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+                <p class="font-semibold">✅ Contrato gerado com sucesso!</p>
+                <p class="text-sm mt-1">Verifique seus downloads.</p>
+            </div>
+        </div>
+
+        <div id="error" class="mt-4 hidden">
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <p class="font-semibold">❌ Erro ao gerar contrato</p>
+                <p class="text-sm mt-1" id="errorMessage"></p>
+            </div>
+        </div>
+
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-semibold mb-2">📋 Como usar em produção:</h3>
+            <ol class="list-decimal list-inside text-sm space-y-2 text-gray-700">
+                <li>Copie a função <code class="bg-gray-200 px-1 rounded">gerarContratoDocx</code> para seu Admin.html</li>
+                <li>Adicione as bibliotecas docx.js e FileSaver.js no <code class="bg-gray-200 px-1 rounded">&lt;head&gt;</code></li>
+                <li>Substitua o botão de PDF pelo botão de DOCX</li>
+                <li>Configure os templates no Editor de Contrato</li>
+                <li>Teste com uma proposta real</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // PROPOSTA DE EXEMPLO (simulando dados do banco)
+        const propostaExemplo = {
+            id: 1,
+            numero_contrato: 'OBY-2025-00001',
+            nome: 'João Silva',
+            sobrenome: 'Santos',
+            nome_fantasia: null,
+            tipo_pessoa: 'fisica',
+            cpf: '123.456.789-00',
+            cnpj: null,
+            rg: '12.345.678-9',
+            email: 'joao@example.com',
+            telefone: '(41) 99999-9999',
+            logradouro: 'Rua das Flores',
+            numero_endereco: '123',
+            complemento: 'Apto 45',
+            bairro: 'Centro',
+            cidade: 'Curitiba',
+            estado: 'PR',
+            cep: '80000-000',
+            distribuidora_energia: 'COPEL',
+            numero_instalacao: '123456789',
+            consumo_kwh: 250,
+            tipo_conexao: 'trifasico',
+            simulacao_economia_mensal: 125.50,
+            simulacao_economia_anual: 1506.00,
+            simulacao_desconto_percentual: 15,
+            simulacao_conta_atual: 837.50,
+            simulacao_conta_nova: 712.00,
+            vendedor: 'Carlos Vendedor',
+            razao_social: null,
+            status: 'aprovado'
+        };
+
+        // TEMPLATES DE EXEMPLO (simulando dados do banco)
+        const templatesExemplo = [
+            {
+                id: 1,
+                secao: 'CLÁUSULA PRIMEIRA',
+                texto: 'CLÁUSULA PRIMEIRA - DO OBJETO\n\nO presente contrato tem como objeto a prestação de serviços de fornecimento de energia elétrica em regime de mercado livre para a instalação número {{NUMERO_INSTALACAO}}, localizada em {{ENDERECO}}, atualmente atendida pela {{DISTRIBUIDORA}}.',
+                ordem: 1
+            },
+            {
+                id: 2,
+                secao: 'CLÁUSULA SEGUNDA',
+                texto: 'CLÁUSULA SEGUNDA - DO VALOR\n\nO CONTRATANTE {{NOME_COMPLETO}}, inscrito no CPF {{CPF_CNPJ}}, terá um benefício econômico estimado em {{ECONOMIA_MENSAL}} mensais, correspondente a um desconto de {{DESCONTO_PERCENTUAL}}% sobre o valor da energia, considerando o consumo médio de {{CONSUMO_KWH}} kWh/mês.',
+                ordem: 2
+            },
+            {
+                id: 3,
+                secao: 'CLÁUSULA TERCEIRA',
+                texto: 'CLÁUSULA TERCEIRA - DA VIGÊNCIA\n\nEste contrato terá vigência de 12 (doze) meses a partir da data de sua assinatura em {{DATA}}, podendo ser renovado mediante acordo entre as partes.',
+                ordem: 3
+            },
+            {
+                id: 4,
+                secao: 'CLÁUSULA QUARTA',
+                texto: 'CLÁUSULA QUARTA - DAS RESPONSABILIDADES\n\nA CONTRATADA se responsabiliza pelo fornecimento de energia elétrica conforme as condições estabelecidas neste contrato.\n\nO CONTRATANTE se responsabiliza pelo pagamento pontual das faturas e pela manutenção das instalações elétricas em bom estado.',
+                ordem: 4
+            },
+            {
+                id: 5,
+                secao: 'CLÁUSULA QUINTA',
+                texto: 'CLÁUSULA QUINTA - DO FORO\n\nElegem as partes o foro da comarca de {{CIDADE}} - {{ESTADO}} para dirimir quaisquer questões oriundas do presente contrato.',
+                ordem: 5
+            }
+        ];
+
+        // FUNÇÃO PRINCIPAL DE GERAÇÃO DO CONTRATO
+        async function gerarContratoDocx(proposta, templates) {
+            try {
+                console.log('🚀 Iniciando geração de contrato...');
+                console.log('📋 Proposta:', proposta);
+                console.log('📝 Templates:', templates);
+
+                // 1. Preparar dados do cliente
+                const nomeCompleto = proposta.nome && proposta.sobrenome
+                    ? `${proposta.nome} ${proposta.sobrenome}`
+                    : proposta.nome_fantasia || 'Não informado';
+
+                const cpfCnpj = proposta.tipo_pessoa === 'fisica'
+                    ? proposta.cpf || 'Não informado'
+                    : proposta.cnpj || 'Não informado';
+
+                const enderecoCompleto = `${proposta.logradouro || ''}, ${proposta.numero_endereco || 's/n'}${proposta.complemento ? ', ' + proposta.complemento : ''}, ${proposta.bairro || ''}, ${proposta.cidade || ''} - ${proposta.estado || ''}, CEP: ${proposta.cep || ''}`;
+
+                const dataAtual = new Date().toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+                const formatarMoeda = (valor) => {
+                    const num = parseFloat(valor);
+                    if (isNaN(num)) return 'R$ 0,00';
+                    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                };
+
+                // 2. Mapa de variáveis
+                const variaveis = {
+                    '{{NUMERO_CONTRATO}}': proposta.numero_contrato || 'N/A',
+                    '{{DATA}}': dataAtual,
+                    '{{NOME_COMPLETO}}': nomeCompleto,
+                    '{{CPF_CNPJ}}': cpfCnpj,
+                    '{{RG}}': proposta.rg || 'Não informado',
+                    '{{EMAIL}}': proposta.email || 'Não informado',
+                    '{{TELEFONE}}': proposta.telefone || 'Não informado',
+                    '{{ENDERECO}}': enderecoCompleto,
+                    '{{LOGRADOURO}}': proposta.logradouro || '',
+                    '{{NUMERO}}': proposta.numero_endereco || '',
+                    '{{COMPLEMENTO}}': proposta.complemento || '',
+                    '{{BAIRRO}}': proposta.bairro || '',
+                    '{{CIDADE}}': proposta.cidade || '',
+                    '{{ESTADO}}': proposta.estado || '',
+                    '{{CEP}}': proposta.cep || '',
+                    '{{TIPO_PESSOA}}': proposta.tipo_pessoa === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica',
+                    '{{NOME_FANTASIA}}': proposta.nome_fantasia || '',
+                    '{{RAZAO_SOCIAL}}': proposta.razao_social || '',
+                    '{{DISTRIBUIDORA}}': proposta.distribuidora_energia || 'COPEL',
+                    '{{NUMERO_INSTALACAO}}': proposta.numero_instalacao || '',
+                    '{{CONSUMO_KWH}}': proposta.consumo_kwh || '0',
+                    '{{TIPO_CONEXAO}}': (proposta.tipo_conexao || '').toUpperCase(),
+                    '{{ECONOMIA_MENSAL}}': formatarMoeda(proposta.simulacao_economia_mensal),
+                    '{{ECONOMIA_ANUAL}}': formatarMoeda(proposta.simulacao_economia_anual),
+                    '{{DESCONTO_PERCENTUAL}}': proposta.simulacao_desconto_percentual || '15',
+                    '{{CONTA_ATUAL}}': formatarMoeda(proposta.simulacao_conta_atual),
+                    '{{CONTA_NOVA}}': formatarMoeda(proposta.simulacao_conta_nova),
+                    '{{VENDEDOR}}': proposta.vendedor || 'Não informado'
+                };
+
+                console.log('🔄 Variáveis preparadas:', variaveis);
+
+                // 3. Função de substituição
+                const substituirVariaveis = (texto) => {
+                    let textoProcessado = texto;
+                    Object.keys(variaveis).forEach(variavel => {
+                        const regex = new RegExp(variavel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                        textoProcessado = textoProcessado.replace(regex, variaveis[variavel]);
+                    });
+                    return textoProcessado;
+                };
+
+                // 4. Criar documento usando docx.js
+                const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
+
+                console.log('📄 Criando parágrafos...');
+
+                // Cabeçalho
+                const headerParagraphs = [
+                    new Paragraph({
+                        text: 'OBY ENERGY',
+                        heading: HeadingLevel.HEADING_1,
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }),
+                    new Paragraph({
+                        text: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENERGIA',
+                        heading: HeadingLevel.HEADING_2,
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `Contrato Nº: ${proposta.numero_contrato || 'N/A'}`,
+                                bold: true
+                            }),
+                            new TextRun({
+                                text: `        Data: ${dataAtual}`,
+                                break: 0
+                            })
+                        ],
+                        alignment: AlignmentType.RIGHT,
+                        spacing: { after: 400 }
+                    })
+                ];
+
+                // Templates
+                const templateParagraphs = templates.flatMap(template => {
+                    const textoProcessado = substituirVariaveis(template.texto);
+                    const linhas = textoProcessado.split('\n').filter(linha => linha.trim());
+
+                    return linhas.map((linha, idx) => {
+                        if (idx === 0 && linha.includes('CLÁUSULA')) {
+                            return new Paragraph({
+                                text: linha,
+                                heading: HeadingLevel.HEADING_3,
+                                spacing: { before: 400, after: 200 }
+                            });
+                        }
+                        return new Paragraph({
+                            text: linha,
+                            spacing: { after: 150 },
+                            alignment: AlignmentType.JUSTIFIED
+                        });
+                    });
+                });
+
+                // Dados do contratante
+                const dadosContratante = [
+                    new Paragraph({
+                        text: 'DADOS DO CONTRATANTE',
+                        heading: HeadingLevel.HEADING_3,
+                        spacing: { before: 600, after: 300 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: 'Nome/Razão Social: ', bold: true }),
+                            new TextRun({ text: nomeCompleto })
+                        ],
+                        spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: proposta.tipo_pessoa === 'fisica' ? 'CPF: ' : 'CNPJ: ', bold: true }),
+                            new TextRun({ text: cpfCnpj })
+                        ],
+                        spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: 'Endereço: ', bold: true }),
+                            new TextRun({ text: enderecoCompleto })
+                        ],
+                        spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: 'E-mail: ', bold: true }),
+                            new TextRun({ text: proposta.email || 'Não informado' })
+                        ],
+                        spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: 'Telefone: ', bold: true }),
+                            new TextRun({ text: proposta.telefone || 'Não informado' })
+                        ],
+                        spacing: { after: 100 }
+                    })
+                ];
+
+                // Assinaturas
+                const assinaturas = [
+                    new Paragraph({
+                        text: '',
+                        spacing: { before: 800, after: 400 }
+                    }),
+                    new Paragraph({
+                        text: '___________________________________________',
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                        text: nomeCompleto,
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 50 }
+                    }),
+                    new Paragraph({
+                        text: 'CONTRATANTE',
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }),
+                    new Paragraph({
+                        text: '___________________________________________',
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                        text: 'OBY ENERGY LTDA',
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 50 }
+                    }),
+                    new Paragraph({
+                        text: 'CONTRATADA',
+                        alignment: AlignmentType.CENTER
+                    })
+                ];
+
+                // Montar documento
+                const allParagraphs = [
+                    ...headerParagraphs,
+                    ...dadosContratante,
+                    ...templateParagraphs,
+                    ...assinaturas
+                ];
+
+                console.log('📦 Criando documento DOCX...');
+
+                // 5. Criar documento
+                const doc = new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: {
+                                    top: 1440,
+                                    right: 1440,
+                                    bottom: 1440,
+                                    left: 1440
+                                }
+                            }
+                        },
+                        children: allParagraphs
+                    }]
+                });
+
+                // 6. Gerar blob e baixar
+                console.log('💾 Gerando arquivo...');
+                const blob = await Packer.toBlob(doc);
+                const fileName = `Contrato_${nomeCompleto.replace(/\s+/g, '_')}_${proposta.numero_contrato || 'SemNumero'}.docx`;
+
+                console.log('⬇️ Baixando arquivo:', fileName);
+                saveAs(blob, fileName);
+
+                console.log('✅ Contrato gerado com sucesso!');
+                return fileName;
+
+            } catch (error) {
+                console.error('❌ Erro ao gerar contrato:', error);
+                throw error;
+            }
+        }
+
+        // FUNÇÃO DE TESTE
+        async function gerarContratoExemplo() {
+            const btnGerar = document.getElementById('btnGerar');
+            const statusDiv = document.getElementById('status');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                btnGerar.disabled = true;
+                btnGerar.innerHTML = '⏳ Gerando contrato...';
+                statusDiv.classList.add('hidden');
+                errorDiv.classList.add('hidden');
+
+                // Simular delay de carregamento de templates
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const fileName = await gerarContratoDocx(propostaExemplo, templatesExemplo);
+
+                statusDiv.classList.remove('hidden');
+                statusDiv.querySelector('p.text-sm').textContent = `Arquivo baixado: ${fileName}`;
+
+            } catch (error) {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = error.message;
+            } finally {
+                btnGerar.disabled = false;
+                btnGerar.innerHTML = '📄 Gerar Contrato DOCX (Exemplo)';
+            }
+        }
+
+        // Log de carregamento
+        console.log('✅ Bibliotecas carregadas com sucesso!');
+        console.log('📦 docx.js versão:', typeof docx !== 'undefined' ? 'OK' : 'ERRO');
+        console.log('📦 FileSaver.js versão:', typeof saveAs !== 'undefined' ? 'OK' : 'ERRO');
+    </script>
+</body>
+</html>
