@@ -3,22 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GD Kratos - Contratação</title>
+    <title>OBY Energy - Gestor de Templates</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            body {
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-            }
-        }
-    </style>
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -28,1173 +19,317 @@
 
         const SUPABASE_URL = 'https://uuaqmwnfjopgjmjjchmw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1YXFtd25mam9wZ2ptampjaG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTEyNzUsImV4cCI6MjA3NjE2NzI3NX0.9ITSBR9SNoZKgvF1AuW4OsL4b8Du5NAXttQpi7B3MO8';
-        
-        const formatBRL = (valor) => {
-            const num = parseFloat(valor);
-            if (isNaN(num)) return '0,00';
-            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        };
 
-        function EnergyContractForm() {
-            const [step, setStep] = useState(1);
-            const [loading, setLoading] = useState(false);
-            const [mostrarRevisao, setMostrarRevisao] = useState(false);
-            const [propostaId, setPropostaId] = useState(null);
-            const [formData, setFormData] = useState({
-                vendedor: '',
-                cep: '', nome: '', sobrenome: '', cupom: '', 
-                email: '', telefone: '',
-                logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
-                estado: '', cidade: '',
-                distribuidoraEnergia: 'COPEL',
-                arquivoConta: null, tipoConexao: '', consumoKW: '', 
-                numeroInstalacao: '',
-                tipoPessoa: 'fisica', cpf: '', rg: '', 
-                arquivoRGFrente: null, arquivoRGVerso: null,
-                cnpj: '', nomeFantasia: '', razaoSocial: '',
-                representanteLegal1: '', cpfRepresentante1: '', rgRepresentante1: '', 
-                arquivoRGRep1Frente: null, arquivoRGRep1Verso: null,
-                contratoSocial: null,
-                temResponsavelPagamento: false,
-                nomeResponsavelPagamento: '', cpfResponsavelPagamento: '',
-                rgResponsavelPagamento: '',
-                arquivoRGRespPagFrente: null, arquivoRGRespPagVerso: null,
-                aceiteTermoAdesao: false, aceiteDadosPessoais: false
-            });
-            const [errors, setErrors] = useState({});
-            const [simulacao, setSimulacao] = useState(null);
-            const [cepValidado, setCepValidado] = useState(false);
-            const [estadoForaCobertura, setEstadoForaCobertura] = useState(false);
-            const [descontoPercentual, setDescontoPercentual] = useState(15);
-            const [loadingDesconto, setLoadingDesconto] = useState(true);
-            const [vendedores, setVendedores] = useState([]);
-            const [loadingVendedores, setLoadingVendedores] = useState(true);
+        // Template base do Termo de Adesão
+        const TEMPLATE_BASE = `PROPOSTA DE ADESÃO AO CONTRATO DE CONSÓRCIO
 
-            const consumoMinimo = { trifasico: 100, bifasico: 50, monofasico: 30 };
+O(A) PROPONENTE CONSORCIADO(A) encaminha sua Proposta de Adesão ao CONSÓRCIO, conforme condições abaixo:
 
-            useEffect(() => {
-                const carregarDescontoPercentual = async () => {
-                    setLoadingDesconto(true);
-                    try {
-                        const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=eq.desconto_percentual&select=*`, {
-                            headers: {
-                                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                'apikey': SUPABASE_KEY
-                            }
-                        });
-                        const data = await response.json();
-                        if (data && data.length > 0) {
-                            const descontoValor = parseFloat(data[0].valor);
-                            setDescontoPercentual(descontoValor);
-                            console.log('✅ Desconto carregado do banco:', descontoValor + '%');
-                        }
-                    } catch (error) {
-                        console.error('❌ Erro ao carregar desconto:', error);
-                    } finally {
-                        setLoadingDesconto(false);
-                    }
-                };
-                carregarDescontoPercentual();
-            }, []);
+DADOS DO CONSÓRCIO
+Razão Social: [Razao_Social_Consorcio]
+CNPJ: [CNPJ_Consorcio]
+Endereço: [Endereco_Consorcio]
+Consorciada Líder: [Consorciada_Lider]
 
-            useEffect(() => {
-                const carregarVendedores = async () => {
-                    setLoadingVendedores(true);
-                    try {
-                        console.log('🔍 Buscando vendedores ativos...');
-                        const response = await fetch(`${SUPABASE_URL}/rest/v1/vendedores?select=id,nome_completo,codigo_vendedor&status=eq.ativo&order=nome_completo.asc`, {
-                            headers: {
-                                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                'apikey': SUPABASE_KEY
-                            }
-                        });
-                        
-                        if (!response.ok) {
-                            console.error('❌ Erro na resposta:', response.status, response.statusText);
-                            throw new Error(`Erro ${response.status}: ${response.statusText}`);
-                        }
-                        
-                        const data = await response.json();
-                        console.log('📊 Dados recebidos:', data);
-                        
-                        if (data && Array.isArray(data)) {
-                            setVendedores(data);
-                            console.log(`✅ ${data.length} vendedores carregados com sucesso!`);
-                        } else {
-                            console.warn('⚠️ Resposta não é um array:', data);
-                            setVendedores([]);
-                        }
-                    } catch (error) {
-                        console.error('❌ Erro ao carregar vendedores:', error);
-                        setVendedores([]);
-                    } finally {
-                        setLoadingVendedores(false);
-                    }
-                };
-                carregarVendedores();
-            }, []);
+DADOS DO(A) PROPONENTE CONSORCIADO(A):
+Razão Social: [Nome_do_Cliente]
+CNPJ: [CPF_CNPJ]
+Endereço: [Endereco_Completo]
+Representante Legal: [Representante_Legal]
+E-mail de contato: [Email]
+Nº Unidade Consumidora: [Numero_da_Instalacao]
+Nº Cliente Concessionária: [Numero_Cliente_Concessionaria]
+Tipo de Conexão: [Tipo_de_Conexao]
+Consumo mínimo (kWh): [Consumo]
+Desconto sobre a Energia Injetada pelo Consórcio (%): [Desconto_Percentual]
 
-            const handleInputChange = (e) => {
-                const { name, value, type, checked } = e.target;
-                setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-                if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-            };
+ADESÃO AO CONSÓRCIO
+O(A) PROPONENTE CONSORCIADO(A) propõe neste ato ingressar no CONSÓRCIO, e compromete-se a cumprir o Contrato de Consórcio celebrado entre a LÍDER e as demais Partes Consorciadas.
 
-            const handleFileChange = (e) => {
-                const { name, files } = e.target;
-                if (files && files[0]) {
-                    setFormData(prev => ({ ...prev, [name]: files[0] }));
-                    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-                }
-            };
+[Cidade], [Data]
 
-            const validateCEP = async () => {
-                const cepRegex = /^\d{5}-?\d{3}$/;
-                if (!cepRegex.test(formData.cep)) {
-                    setErrors(prev => ({ ...prev, cep: 'CEP inválido' }));
-                    return false;
-                }
-                
-                try {
-                    const cepLimpo = formData.cep.replace('-', '');
-                    const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-                    const data = await response.json();
-                    
-                    if (data.erro) {
-                        setErrors(prev => ({ ...prev, cep: 'CEP não encontrado' }));
-                        return false;
-                    }
-                    
-                    setFormData(prev => ({ 
-                        ...prev, 
-                        estado: data.uf, 
-                        cidade: data.localidade,
-                        logradouro: data.logradouro || '',
-                        bairro: data.bairro || '',
-                    }));
-                    
-                    if (data.uf !== 'PR') {
-                        setEstadoForaCobertura(true);
-                    } else {
-                        setEstadoForaCobertura(false);
-                    }
-                    
-                    setCepValidado(true);
-                    return true;
-                } catch (error) {
-                    setErrors(prev => ({ ...prev, cep: 'Erro ao validar CEP' }));
-                    return false;
-                }
-            };
+_________________________________
+CONTRATANTE
+[Nome_do_Cliente]
+CPF/CNPJ: [CPF_CNPJ]
 
-            const validateStep = () => {
-                const newErrors = {};
-                
-                if (step === 1) {
-                    if (!formData.vendedor) newErrors.vendedor = 'Campo obrigatório';
-                    if (!formData.cep) newErrors.cep = 'Campo obrigatório';
-                    if (!formData.nome) newErrors.nome = 'Campo obrigatório';
-                    if (!formData.sobrenome) newErrors.sobrenome = 'Campo obrigatório';
-                    if (!formData.email) newErrors.email = 'Campo obrigatório';
-                    if (!formData.telefone) newErrors.telefone = 'Campo obrigatório';
-                    if (!cepValidado) newErrors.cep = 'Valide o CEP antes de continuar';
-                }
-                
-                if (step === 2) {
-                    if (!formData.logradouro) newErrors.logradouro = 'Campo obrigatório';
-                    if (!formData.numeroEndereco) newErrors.numeroEndereco = 'Campo obrigatório';
-                    if (!formData.bairro) newErrors.bairro = 'Campo obrigatório';
-                }
-                
-                if (step === 3) {
-                    if (!formData.distribuidoraEnergia) newErrors.distribuidoraEnergia = 'Campo obrigatório';
-                    if (!formData.tipoConexao) newErrors.tipoConexao = 'Campo obrigatório';
-                    if (!formData.consumoKW) newErrors.consumoKW = 'Campo obrigatório';
-                    if (!formData.numeroInstalacao) newErrors.numeroInstalacao = 'Campo obrigatório';
-                    
-                    const consumo = parseFloat(formData.consumoKW);
-                    const minimo = consumoMinimo[formData.tipoConexao];
-                    if (consumo < minimo) {
-                        newErrors.consumoKW = `Consumo mínimo para ${formData.tipoConexao}: ${minimo} kW`;
-                    }
-                }
-                
-                if (step === 5) {
-                    if (formData.tipoPessoa === 'fisica') {
-                        if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
-                        if (!formData.rg) newErrors.rg = 'Campo obrigatório';
-                        if (!formData.arquivoRGFrente) newErrors.arquivoRGFrente = 'Campo obrigatório';
-                        if (!formData.arquivoRGVerso) newErrors.arquivoRGVerso = 'Campo obrigatório';
-                    } else {
-                        if (!formData.cnpj) newErrors.cnpj = 'Campo obrigatório';
-                        if (!formData.nomeFantasia) newErrors.nomeFantasia = 'Campo obrigatório';
-                        if (!formData.razaoSocial) newErrors.razaoSocial = 'Campo obrigatório';
-                        if (!formData.representanteLegal1) newErrors.representanteLegal1 = 'Campo obrigatório';
-                        if (!formData.cpfRepresentante1) newErrors.cpfRepresentante1 = 'Campo obrigatório';
-                        if (!formData.rgRepresentante1) newErrors.rgRepresentante1 = 'Campo obrigatório';
-                        if (!formData.arquivoRGRep1Frente) newErrors.arquivoRGRep1Frente = 'Campo obrigatório';
-                        if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'Campo obrigatório';
-                        if (!formData.contratoSocial) newErrors.contratoSocial = 'Campo obrigatório';
-                    }
-                    
-                    if (formData.temResponsavelPagamento) {
-                        if (!formData.nomeResponsavelPagamento) newErrors.nomeResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.cpfResponsavelPagamento) newErrors.cpfResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.rgResponsavelPagamento) newErrors.rgResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.arquivoRGRespPagFrente) newErrors.arquivoRGRespPagFrente = 'Campo obrigatório';
-                        if (!formData.arquivoRGRespPagVerso) newErrors.arquivoRGRespPagVerso = 'Campo obrigatório';
-                    }
-                    
-                    if (!formData.arquivoConta) newErrors.arquivoConta = 'Campo obrigatório';
-                    if (!formData.aceiteTermoAdesao) newErrors.aceiteTermoAdesao = 'Você deve aceitar este termo';
-                    if (!formData.aceiteDadosPessoais) newErrors.aceiteDadosPessoais = 'Você deve aceitar este termo';
-                }
-                
-                setErrors(newErrors);
-                return Object.keys(newErrors).length === 0;
-            };
+_________________________________
+OBY ENERGY - CONTRATADA`;
 
-            const calcularSimulacao = async () => {
-                let tarifaTotal = 0.842355;
-                let tarifaEnergia = 0.682308;
-                let tarifaImpostos = 0.160047;
-                
-                try {
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?select=*`, {
-                        headers: {
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'apikey': SUPABASE_KEY
-                        }
-                    });
-                    const configs = await response.json();
-                    
-                    configs.forEach(config => {
-                        if (config.chave === 'tarifa_kwh') tarifaTotal = parseFloat(config.valor);
-                        if (config.chave === 'proporcao_energia') tarifaEnergia = parseFloat(config.valor);
-                        if (config.chave === 'proporcao_impostos') tarifaImpostos = parseFloat(config.valor);
-                    });
-                } catch (error) {
-                    console.log('Usando valores padrão');
-                }
+        // Campos variáveis disponíveis
+        const CAMPOS_PADRAO = [
+            { id: 1, nome: '[Nome_do_Cliente]', descricao: 'Nome completo do cliente', categoria: 'Cliente' },
+            { id: 2, nome: '[CPF_CNPJ]', descricao: 'CPF ou CNPJ do cliente', categoria: 'Cliente' },
+            { id: 3, nome: '[Email]', descricao: 'E-mail do cliente', categoria: 'Cliente' },
+            { id: 4, nome: '[Telefone]', descricao: 'Telefone do cliente', categoria: 'Cliente' },
+            { id: 5, nome: '[Endereco_Completo]', descricao: 'Endereço completo', categoria: 'Endereço' },
+            { id: 6, nome: '[Cidade]', descricao: 'Cidade', categoria: 'Endereço' },
+            { id: 7, nome: '[Estado]', descricao: 'Estado (UF)', categoria: 'Endereço' },
+            { id: 8, nome: '[CEP]', descricao: 'CEP', categoria: 'Endereço' },
+            { id: 9, nome: '[Numero_da_Instalacao]', descricao: 'Número da instalação', categoria: 'Instalação' },
+            { id: 10, nome: '[Distribuidora]', descricao: 'Distribuidora de energia', categoria: 'Instalação' },
+            { id: 11, nome: '[Consumo]', descricao: 'Consumo em kWh', categoria: 'Instalação' },
+            { id: 12, nome: '[Tipo_de_Conexao]', descricao: 'Tipo de conexão (Mono/Bi/Tri)', categoria: 'Instalação' },
+            { id: 13, nome: '[Numero_do_Contrato]', descricao: 'Número do contrato OBY', categoria: 'Contrato' },
+            { id: 14, nome: '[Data]', descricao: 'Data atual formatada', categoria: 'Contrato' },
+            { id: 15, nome: '[Desconto_Percentual]', descricao: 'Percentual de desconto (%)', categoria: 'Financeiro' },
+            { id: 16, nome: '[Custo_Atual]', descricao: 'Custo atual (R$)', categoria: 'Financeiro' },
+            { id: 17, nome: '[Custo_OBY]', descricao: 'Custo OBY (R$)', categoria: 'Financeiro' },
+            { id: 18, nome: '[Economia_Mensal]', descricao: 'Economia mensal (R$)', categoria: 'Financeiro' },
+            { id: 19, nome: '[Razao_Social_Consorcio]', descricao: 'Razão social do consórcio', categoria: 'Consórcio' },
+            { id: 20, nome: '[CNPJ_Consorcio]', descricao: 'CNPJ do consórcio', categoria: 'Consórcio' },
+        ];
 
-                const consumo = parseFloat(formData.consumoKW);
-                const minimo = consumoMinimo[formData.tipoConexao];
-                const desconto = descontoPercentual / 100;
-                
-                // ✅ CORRIGIDO: Calcular dinamicamente baseado no tipo de conexão
-                const consumoMinimoValor = minimo * tarifaTotal;
-                
-                const consumoExcedente = consumo - minimo;
-                const impostosNaoCompensaveis = consumoExcedente * tarifaImpostos;
-                
-                const energiaCativaAtual = consumoExcedente * tarifaEnergia;
-                const contaAtual = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaAtual;
-                
-                const tarifaEnergiaComDesconto = tarifaEnergia * (1 - desconto);
-                const energiaCativaComDesconto = consumoExcedente * tarifaEnergiaComDesconto;
-                const contaNova = consumoMinimoValor + impostosNaoCompensaveis + energiaCativaComDesconto;
-                
-                const economiaMensal = contaAtual - contaNova;
-                const economiaAnual = economiaMensal * 12;
-                const contasPorAno = 12 - (economiaAnual / contaAtual);
-                
-                setSimulacao({
-                    contaAtual: contaAtual.toFixed(2),
-                    contaNova: contaNova.toFixed(2),
-                    economiaMensal: economiaMensal.toFixed(2),
-                    economiaAnual: economiaAnual.toFixed(2),
-                    desconto: (desconto * 100).toFixed(0),
-                    consumo,
-                    minimo,
-                    consumoMinimoValor: consumoMinimoValor.toFixed(2),
-                    impostosNaoCompensaveis: impostosNaoCompensaveis.toFixed(2),
-                    energiaCativaAtual: energiaCativaAtual.toFixed(2),
-                    energiaCativaComDesconto: energiaCativaComDesconto.toFixed(2),
-                    contasPorAno: contasPorAno.toFixed(2),
-                    consumoKW: consumo,
-                    tipoConexao: formData.tipoConexao
-                });
-            };
+        function GestorTemplates() {
+            const [template, setTemplate] = useState(TEMPLATE_BASE);
+            const [campos, setCampos] = useState(CAMPOS_PADRAO);
+            const [novoCampo, setNovoCampo] = useState({ nome: '', descricao: '', categoria: 'Personalizado' });
+            const [salvando, setSalvando] = useState(false);
+            const [proposta, setProposta] = useState(null);
 
-            const handleNext = async () => {
-                if (!validateStep()) return;
-                
-                if (step === 3) await calcularSimulacao();
-                if (step === 5) {
-                    await handleSubmit();
+            const adicionarCampo = () => {
+                if (!novoCampo.nome || !novoCampo.descricao) {
+                    alert('Preencha nome e descrição do campo!');
                     return;
                 }
                 
-                setStep(step + 1);
+                const nomeCampo = novoCampo.nome.startsWith('[') ? novoCampo.nome : `[${novoCampo.nome}]`;
+                const novoCampoObj = {
+                    id: campos.length + 1,
+                    nome: nomeCampo,
+                    descricao: novoCampo.descricao,
+                    categoria: novoCampo.categoria
+                };
+                
+                setCampos([...campos, novoCampoObj]);
+                setNovoCampo({ nome: '', descricao: '', categoria: 'Personalizado' });
+                alert('✅ Campo adicionado!');
             };
 
-            const uploadFile = async (file, folder) => {
-                console.log(`📤 Iniciando upload: ${file.name} para ${folder}`);
-                const fileName = `${Date.now()}_${file.name}`;
-                
-                try {
-                    const response = await fetch(
-                        `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
-                        {
-                            method: 'POST',
-                            headers: {
-                                'apikey': SUPABASE_KEY,
-                                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                'Content-Type': file.type
-                            },
-                            body: file
-                        }
-                    );
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error(`❌ Erro no upload de ${file.name}:`, errorText);
-                        throw new Error(`Erro no upload de ${file.name}: ${errorText}`);
-                    }
-                    
-                    const url = `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
-                    console.log(`✅ Upload concluído: ${url}`);
-                    return url;
-                } catch (error) {
-                    console.error(`❌ Erro no upload de ${file.name}:`, error);
-                    throw error;
+            const removerCampo = (id) => {
+                if (confirm('Remover este campo?')) {
+                    setCampos(campos.filter(c => c.id !== id));
                 }
             };
 
-            const handleSubmit = async () => {
-                console.log('📝 Iniciando submissão da proposta...');
-                setLoading(true);
+            const inserirCampo = (nomeCampo) => {
+                const textarea = document.getElementById('editor-template');
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const text = textarea.value;
+                const antes = text.substring(0, start);
+                const depois = text.substring(end);
                 
+                setTemplate(antes + nomeCampo + depois);
+                
+                // Reposicionar cursor
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.setSelectionRange(start + nomeCampo.length, start + nomeCampo.length);
+                }, 10);
+            };
+
+            const salvarTemplate = async () => {
+                setSalvando(true);
                 try {
-                    console.log('🧪 TESTE 1: Verificando conexão com o banco...');
-                    const testeConexao = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
-                        method: 'GET',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
-                        }
-                    });
-                    
-                    if (!testeConexao.ok) {
-                        const erro = await testeConexao.text();
-                        console.error('❌ ERRO DE CONEXÃO:', erro);
-                        throw new Error(`Erro ao conectar com o banco: ${erro}`);
-                    }
-                    console.log('✅ Conexão com banco OK');
-                    
-                    console.log('📤 Iniciando uploads de arquivos...');
-                    let contaUrl = null, rgFrenteUrl = null, rgVersoUrl = null;
-                    let rgRep1FrenteUrl = null, rgRep1VersoUrl = null, contratoSocialUrl = null;
-                    let rgRespPagFrenteUrl = null, rgRespPagVersoUrl = null;
-                    
-                    if (formData.arquivoConta) contaUrl = await uploadFile(formData.arquivoConta, 'contas');
-                    
-                    if (formData.tipoPessoa === 'fisica') {
-                        if (formData.arquivoRGFrente) rgFrenteUrl = await uploadFile(formData.arquivoRGFrente, 'documentos');
-                        if (formData.arquivoRGVerso) rgVersoUrl = await uploadFile(formData.arquivoRGVerso, 'documentos');
-                    } else {
-                        if (formData.arquivoRGRep1Frente) rgRep1FrenteUrl = await uploadFile(formData.arquivoRGRep1Frente, 'documentos');
-                        if (formData.arquivoRGRep1Verso) rgRep1VersoUrl = await uploadFile(formData.arquivoRGRep1Verso, 'documentos');
-                        if (formData.contratoSocial) contratoSocialUrl = await uploadFile(formData.contratoSocial, 'documentos');
-                    }
-                    
-                    if (formData.temResponsavelPagamento) {
-                        if (formData.arquivoRGRespPagFrente) rgRespPagFrenteUrl = await uploadFile(formData.arquivoRGRespPagFrente, 'documentos');
-                        if (formData.arquivoRGRespPagVerso) rgRespPagVersoUrl = await uploadFile(formData.arquivoRGRespPagVerso, 'documentos');
-                    }
-                    
-                    console.log('✅ Uploads concluídos!');
-                    
-                    const proposta = {
-                        vendedor_id: formData.vendedor,
-                        nome: formData.nome,
-                        sobrenome: formData.sobrenome,
-                        email: formData.email,
-                        telefone: formData.telefone,
-                        cep: formData.cep,
-                        logradouro: formData.logradouro,
-                        numero_endereco: formData.numeroEndereco,
-                        complemento: formData.complemento,
-                        bairro: formData.bairro,
-                        cidade: formData.cidade,
-                        estado: formData.estado,
-                        distribuidora: formData.distribuidoraEnergia,
-                        tipo_conexao: formData.tipoConexao,
-                        consumo_kwh: parseFloat(formData.consumoKW),
-                        numero_instalacao: formData.numeroInstalacao,
-                        arquivo_conta_url: contaUrl,
-                        tipo_pessoa: formData.tipoPessoa,
-                        cpf: formData.cpf,
-                        rg: formData.rg,
-                        rg_frente_url: rgFrenteUrl,
-                        rg_verso_url: rgVersoUrl,
-                        cnpj: formData.cnpj,
-                        nome_fantasia: formData.nomeFantasia,
-                        razao_social: formData.razaoSocial,
-                        representante_legal_1: formData.representanteLegal1,
-                        cpf_representante_1: formData.cpfRepresentante1,
-                        rg_representante_1: formData.rgRepresentante1,
-                        rg_rep1_frente_url: rgRep1FrenteUrl,
-                        rg_rep1_verso_url: rgRep1VersoUrl,
-                        contrato_social_url: contratoSocialUrl,
-                        tem_responsavel_pagamento: formData.temResponsavelPagamento,
-                        nome_responsavel_pagamento: formData.nomeResponsavelPagamento,
-                        cpf_responsavel_pagamento: formData.cpfResponsavelPagamento,
-                        rg_responsavel_pagamento: formData.rgResponsavelPagamento,
-                        rg_resp_pag_frente_url: rgRespPagFrenteUrl,
-                        rg_resp_pag_verso_url: rgRespPagVersoUrl,
-                        aceite_termo_adesao: formData.aceiteTermoAdesao,
-                        aceite_dados_pessoais: formData.aceiteDadosPessoais,
-                        cupom: formData.cupom,
-                        simulacao_economia_mensal: parseFloat(simulacao.economiaMensal),
-                        simulacao_economia_anual: parseFloat(simulacao.economiaAnual),
-                        simulacao_desconto_percentual: parseFloat(simulacao.desconto),
-                        simulacao_conta_atual: parseFloat(simulacao.contaAtual),
-                        simulacao_conta_nova: parseFloat(simulacao.contaNova),
-                        status: 'pendente',
-                        data_criacao: new Date().toISOString()
-                    };
-                    
-                    console.log('💾 Salvando proposta no banco...');
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/propostas`, {
-                        method: 'POST',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json',
-                            'Prefer': 'return=representation'
-                        },
-                        body: JSON.stringify(proposta)
-                    });
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('❌ Erro ao salvar proposta:', errorText);
-                        throw new Error(`Erro ao salvar proposta: ${errorText}`);
-                    }
-                    
-                    const resultado = await response.json();
-                    console.log('✅ PROPOSTA SALVA COM SUCESSO!', resultado);
-                    setPropostaId(resultado[0].id);
-                    setMostrarRevisao(true);
-                    
+                    // Salvar no Supabase (você pode adaptar para sua estrutura)
+                    alert('✅ Template salvo com sucesso!');
+                    localStorage.setItem('oby_template_contrato', template);
+                    localStorage.setItem('oby_campos_customizados', JSON.stringify(campos));
                 } catch (error) {
-                    console.error('❌ ERRO GERAL:', error);
-                    alert('Erro ao enviar proposta: ' + error.message);
+                    alert('❌ Erro ao salvar: ' + error.message);
                 } finally {
-                    setLoading(false);
+                    setSalvando(false);
                 }
             };
 
-            if (mostrarRevisao) {
-                const dataAtual = new Date().toLocaleDateString('pt-BR');
-                const nomeCompleto = formData.tipoPessoa === 'fisica' 
-                    ? `${formData.nome} ${formData.sobrenome}`
-                    : formData.nomeFantasia;
-                const documento = formData.tipoPessoa === 'fisica' ? formData.cpf : formData.cnpj;
-                
-                return (
-                    <div className="min-h-screen bg-white p-8">
-                        <div className="max-w-4xl mx-auto">
-                            <div className="text-center mb-8 no-print">
-                                <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="GD Kratos" className="h-24 w-auto mx-auto mb-4" />
-                                <h1 className="text-3xl font-bold text-green-600">✅ Proposta Enviada!</h1>
-                                <p className="text-gray-600 mt-2">Sua proposta foi registrada com sucesso em nosso sistema</p>
-                            </div>
+            const gerarPrevia = () => {
+                const dadosExemplo = {
+                    '[Nome_do_Cliente]': 'ICARAIMA II LTDA',
+                    '[CPF_CNPJ]': '46176395/0001-89',
+                    '[Email]': 'contato@obyenergy.com',
+                    '[Telefone]': '41 3779-3503',
+                    '[Endereco_Completo]': 'Rua Exemplo, 123, Centro, Curitiba - PR',
+                    '[Cidade]': 'Curitiba',
+                    '[Estado]': 'PR',
+                    '[CEP]': '80000-000',
+                    '[Numero_da_Instalacao]': '21859167',
+                    '[Distribuidora]': 'COPEL',
+                    '[Consumo]': '5000',
+                    '[Tipo_de_Conexao]': 'Trifásica',
+                    '[Numero_do_Contrato]': 'OBY-2025-12345',
+                    '[Data]': new Date().toLocaleDateString('pt-BR'),
+                    '[Desconto_Percentual]': '15',
+                    '[Custo_Atual]': 'R$ 3.500,00',
+                    '[Custo_OBY]': 'R$ 2.975,00',
+                    '[Economia_Mensal]': 'R$ 525,00',
+                    '[Razao_Social_Consorcio]': 'CONSÓRCIO SOLAR PARANÁ',
+                    '[CNPJ_Consorcio]': '12.345.678/0001-90',
+                };
 
-                            <div className="bg-gradient-to-r from-green-100 to-blue-100 p-6 rounded-xl mb-6">
-                                <div className="grid grid-cols-3 gap-6 text-center">
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Economia Mensal</p>
-                                        <p className="text-3xl font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Economia Anual</p>
-                                        <p className="text-3xl font-bold text-blue-600">R$ {formatBRL(simulacao.economiaAnual)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-2">Desconto</p>
-                                        <p className="text-3xl font-bold text-purple-600">{simulacao.desconto}%</p>
-                                    </div>
-                                </div>
-                            </div>
+                let previa = template;
+                Object.keys(dadosExemplo).forEach(campo => {
+                    previa = previa.replace(new RegExp(campo.replace(/[[\]]/g, '\\$&'), 'g'), dadosExemplo[campo]);
+                });
 
-                            <div className="border rounded-lg p-6 mb-6">
-                                <h2 className="text-xl font-bold mb-4 flex items-center">
-                                    <span className="mr-2">📋</span> Dados do Cliente
-                                </h2>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Nome Completo</p>
-                                        <p className="font-semibold">{nomeCompleto}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">{formData.tipoPessoa === 'fisica' ? 'CPF' : 'CNPJ'}</p>
-                                        <p className="font-semibold">{documento}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">E-mail</p>
-                                        <p className="font-semibold">{formData.email}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Telefone</p>
-                                        <p className="font-semibold">{formData.telefone}</p>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-600">Endereço</p>
-                                        <p className="font-semibold">
-                                            {formData.logradouro}, {formData.numeroEndereco}
-                                            {formData.complemento && `, ${formData.complemento}`}
-                                            {' - '}{formData.bairro}, {formData.cidade} - {formData.estado}
-                                            {' - CEP: '}{formData.cep}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                // Gerar DOCX
+                const paragrafos = previa.split('\n').map(linha => {
+                    const isTitulo = linha === linha.toUpperCase() && linha.length > 0 && linha.length < 100;
+                    return new docx.Paragraph({
+                        text: linha,
+                        bold: isTitulo,
+                        spacing: { after: isTitulo ? 300 : 200 }
+                    });
+                });
 
-                            <div className="border rounded-lg p-6 mb-6">
-                                <h2 className="text-xl font-bold mb-4 flex items-center">
-                                    <span className="mr-2">⚡</span> Dados da Instalação
-                                </h2>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Distribuidora</p>
-                                        <p className="font-semibold">{formData.distribuidoraEnergia}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Número da Instalação</p>
-                                        <p className="font-semibold">{formData.numeroInstalacao}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Tipo de Conexão</p>
-                                        <p className="font-semibold capitalize">{formData.tipoConexao}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Consumo Médio Mensal</p>
-                                        <p className="font-semibold">{formData.consumoKW} kWh</p>
-                                    </div>
-                                </div>
-                            </div>
+                const doc = new docx.Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+                            }
+                        },
+                        children: paragrafos
+                    }]
+                });
 
-                            <div className="border rounded-lg p-6 mb-6">
-                                <h2 className="text-xl font-bold mb-4 flex items-center">
-                                    <span className="mr-2">🧮</span> Memória de Cálculo Detalhada
-                                </h2>
-                                
-                                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                                    <h3 className="font-semibold mb-3">📊 Base do Cálculo</h3>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Consumo Médio:</span>
-                                            <span className="font-semibold">{simulacao.consumo} kWh</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Consumo Mínimo:</span>
-                                            <span className="font-semibold">{simulacao.minimo} kWh</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Tipo de Conexão:</span>
-                                            <span className="font-semibold capitalize">{simulacao.tipoConexao}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Desconto Aplicado:</span>
-                                            <span className="font-semibold text-green-600">{simulacao.desconto}%</span>
-                                        </div>
-                                    </div>
-                                </div>
+                docx.Packer.toBlob(doc).then(blob => {
+                    saveAs(blob, 'Previa_Contrato.docx');
+                    alert('✅ Prévia gerada!');
+                });
+            };
 
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div className="border-2 border-red-200 rounded-lg p-4">
-                                        <h3 className="font-semibold text-center mb-3 text-red-700">Conta Atual</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between">
-                                                <span>Consumo Mínimo:</span>
-                                                <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Impostos Não Compensáveis:</span>
-                                                <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Energia Cativa:</span>
-                                                <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                            </div>
-                                            <div className="border-t-2 border-red-300 pt-2 flex justify-between font-bold">
-                                                <span>Total:</span>
-                                                <span className="text-red-700">R$ {formatBRL(simulacao.contaAtual)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="border-2 border-green-200 rounded-lg p-4">
-                                        <h3 className="font-semibold text-center mb-3 text-green-700">Com a GD Kratos</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between">
-                                                <span>Consumo Mínimo:</span>
-                                                <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Impostos Não Compensáveis:</span>
-                                                <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Energia com Desconto:</span>
-                                                <span>R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
-                                            </div>
-                                            <div className="border-t-2 border-green-300 pt-2 flex justify-between font-bold">
-                                                <span>Total:</span>
-                                                <span className="text-green-700">R$ {formatBRL(simulacao.contaNova)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
-                                    <h3 className="font-semibold mb-3">💰 Resumo da Economia</h3>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span>Economia Mensal:</span>
-                                            <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Economia Anual:</span>
-                                            <span className="font-bold text-green-600">R$ {formatBRL(simulacao.economiaAnual)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Equivalente a pagar por ano:</span>
-                                            <span className="font-bold text-blue-600">{simulacao.contasPorAno} contas</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mt-4 bg-yellow-50 p-3 rounded-lg">
-                                    <p className="text-xs text-yellow-800">
-                                        <strong>Observação:</strong> Os valores apresentados são estimativas baseadas nas informações fornecidas. 
-                                        A economia real pode variar conforme o consumo mensal e as bandeiras tarifárias vigentes.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="border rounded-lg p-6 mb-6">
-                                <h2 className="text-xl font-bold mb-4 flex items-center">
-                                    <span className="mr-2">📌</span> Próximos Passos
-                                </h2>
-                                <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                                    <li>Nossa equipe analisará sua proposta em até 48 horas úteis</li>
-                                    <li>Você receberá um e-mail com o status da análise</li>
-                                    <li>Após aprovação, entraremos em contato para finalizar a contratação</li>
-                                    <li>O processo de migração leva em média 30 dias</li>
-                                </ol>
-                                <div className="mt-4 bg-blue-50 p-4 rounded-lg">
-                                    <p className="text-sm text-gray-700">
-                                        <strong>Dúvidas?</strong> Entre em contato conosco:
-                                    </p>
-                                    <p className="text-sm mt-2">
-                                        📧 E-mail: contato@gdkratos.com.br<br/>
-                                        📱 WhatsApp: (41) 99999-9999
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 flex gap-4 justify-center no-print">
-                                <button onClick={() => window.print()} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                    🖨️ Imprimir
-                                </button>
-                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                    ➕ Nova Proposta
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
+            const categorias = [...new Set(campos.map(c => c.categoria))];
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
-                    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-                        <div className="text-center mb-8">
-                            <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="GD Kratos" className="h-20 w-auto mx-auto mb-4" />
-                            <h1 className="text-3xl font-bold text-gray-800">Proposta de Contratação</h1>
-                            <p className="text-gray-600 mt-2">Preencha os dados para simular sua economia</p>
+                <div className="min-h-screen bg-gray-50">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
+                        <div className="container mx-auto">
+                            <h1 className="text-3xl font-bold">📄 Gestor de Templates de Contrato</h1>
+                            <p className="text-blue-100 mt-2">Personalize o template e gerencie campos variáveis</p>
                         </div>
+                    </div>
 
-                        <div className="flex items-center justify-between mb-8">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                                <div key={s} className="flex items-center">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= s ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                                        {s}
-                                    </div>
-                                    {s < 5 && <div className={`w-12 h-1 ${step > s ? 'bg-blue-600' : 'bg-gray-200'}`}></div>}
-                                </div>
-                            ))}
-                        </div>
-
-                        {step === 1 && (
-                            <div className="space-y-6">
-                                <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                                    <p className="text-sm text-blue-800">👤 Informações do Cliente</p>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Vendedor *</label>
-                                    {loadingVendedores ? (
-                                        <div className="w-full p-3 border rounded-lg border-gray-300 bg-gray-50 text-gray-500">
-                                            Carregando vendedores...
-                                        </div>
-                                    ) : (
-                                        <select 
-                                            name="vendedor" 
-                                            value={formData.vendedor} 
-                                            onChange={handleInputChange} 
-                                            className={`w-full p-3 border rounded-lg ${errors.vendedor ? 'border-red-500' : 'border-gray-300'}`}
+                    <div className="container mx-auto p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Campos Variáveis */}
+                            <div className="lg:col-span-1">
+                                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6">
+                                    <h2 className="text-xl font-bold mb-4">🏷️ Campos Variáveis</h2>
+                                    
+                                    {/* Adicionar Novo Campo */}
+                                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                                        <h3 className="font-semibold mb-3">➕ Adicionar Campo</h3>
+                                        <input
+                                            type="text"
+                                            placeholder="Nome do campo"
+                                            value={novoCampo.nome}
+                                            onChange={(e) => setNovoCampo({...novoCampo, nome: e.target.value})}
+                                            className="w-full p-2 border rounded mb-2"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Descrição"
+                                            value={novoCampo.descricao}
+                                            onChange={(e) => setNovoCampo({...novoCampo, descricao: e.target.value})}
+                                            className="w-full p-2 border rounded mb-2"
+                                        />
+                                        <select
+                                            value={novoCampo.categoria}
+                                            onChange={(e) => setNovoCampo({...novoCampo, categoria: e.target.value})}
+                                            className="w-full p-2 border rounded mb-2"
                                         >
-                                            <option value="">Selecione um vendedor...</option>
-                                            {vendedores.map((v) => (
-                                                <option key={v.id} value={v.id}>
-                                                    {v.codigo_vendedor ? `${v.codigo_vendedor} - ${v.nome_completo}` : v.nome_completo}
-                                                </option>
-                                            ))}
+                                            <option value="Personalizado">Personalizado</option>
+                                            <option value="Cliente">Cliente</option>
+                                            <option value="Endereço">Endereço</option>
+                                            <option value="Instalação">Instalação</option>
+                                            <option value="Contrato">Contrato</option>
+                                            <option value="Financeiro">Financeiro</option>
                                         </select>
-                                    )}
-                                    {errors.vendedor && <p className="text-red-500 text-sm mt-1">{errors.vendedor}</p>}
-                                </div>
+                                        <button
+                                            onClick={adicionarCampo}
+                                            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                        >
+                                            Adicionar Campo
+                                        </button>
+                                    </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">CEP *</label>
-                                    <div className="flex gap-2">
-                                        <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className={`flex-1 p-3 border rounded-lg ${errors.cep ? 'border-red-500' : 'border-gray-300'}`} />
-                                        <button type="button" onClick={validateCEP} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Validar</button>
-                                    </div>
-                                    {errors.cep && <p className="text-red-500 text-sm mt-1">{errors.cep}</p>}
-                                    {estadoForaCobertura && (
-                                        <p className="text-orange-600 text-sm mt-2 bg-orange-50 p-3 rounded-lg">
-                                            ⚠️ Atualmente não atendemos este estado. Você pode continuar, mas a proposta ficará pendente de análise.
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Nome *</label>
-                                        <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nome ? 'border-red-500' : 'border-gray-300'}`} />
-                                        {errors.nome && <p className="text-red-500 text-sm mt-1">{errors.nome}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Sobrenome *</label>
-                                        <input type="text" name="sobrenome" value={formData.sobrenome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.sobrenome ? 'border-red-500' : 'border-gray-300'}`} />
-                                        {errors.sobrenome && <p className="text-red-500 text-sm mt-1">{errors.sobrenome}</p>}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Email *</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Telefone *</label>
-                                    <input type="tel" name="telefone" value={formData.telefone} onChange={handleInputChange} placeholder="(00) 00000-0000" className={`w-full p-3 border rounded-lg ${errors.telefone ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.telefone && <p className="text-red-500 text-sm mt-1">{errors.telefone}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Cupom (opcional)</label>
-                                    <input type="text" name="cupom" value={formData.cupom} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
-                                    {formData.cupom && <p className="text-green-600 text-sm mt-1">✓ Desconto de 20%!</p>}
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 2 && (
-                            <div className="space-y-6">
-                                <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-                                    <p className="text-sm text-indigo-800">📍 Endereço do Cliente</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Logradouro *</label>
-                                    <input type="text" name="logradouro" value={formData.logradouro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.logradouro ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.logradouro && <p className="text-red-500 text-sm mt-1">{errors.logradouro}</p>}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Número *</label>
-                                        <input type="text" name="numeroEndereco" value={formData.numeroEndereco} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroEndereco ? 'border-red-500' : 'border-gray-300'}`} />
-                                        {errors.numeroEndereco && <p className="text-red-500 text-sm mt-1">{errors.numeroEndereco}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Complemento</label>
-                                        <input type="text" name="complemento" value={formData.complemento} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Bairro *</label>
-                                    <input type="text" name="bairro" value={formData.bairro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.bairro ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.bairro && <p className="text-red-500 text-sm mt-1">{errors.bairro}</p>}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Cidade</label>
-                                        <input type="text" name="cidade" value={formData.cidade} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Estado</label>
-                                        <input type="text" name="estado" value={formData.estado} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 3 && (
-                            <div className="space-y-6">
-                                <div className="bg-green-50 p-4 rounded-lg mb-4">
-                                    <p className="text-sm text-green-800">⚡ Qualificação da Instalação</p>
-                                </div>
-                                <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6 mb-6">
-                                    <h3 className="text-lg font-bold text-blue-800 mb-4">
-                                        <span className="text-2xl mr-2">📄</span>
-                                        Como encontrar essas informações na sua conta da COPEL
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-1.png" alt="Guia" className="w-full rounded-lg" />
-                                        <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/Demos/guia-copel-2.png" alt="Guia" className="w-full rounded-lg" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Distribuidora *</label>
-                                    <input type="text" name="distribuidoraEnergia" value={formData.distribuidoraEnergia} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.distribuidoraEnergia ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.distribuidoraEnergia && <p className="text-red-500 text-sm mt-1">{errors.distribuidoraEnergia}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Tipo de Conexão *</label>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {['trifasico', 'bifasico', 'monofasico'].map((tipo) => (
-                                            <button key={tipo} type="button" onClick={() => setFormData(prev => ({ ...prev, tipoConexao: tipo }))} className={`p-4 rounded-lg border-2 ${formData.tipoConexao === tipo ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
-                                                {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-                                                <div className="text-xs text-gray-600 mt-1">Mín: {consumoMinimo[tipo]} kW</div>
-                                            </button>
+                                    {/* Lista de Campos */}
+                                    <div className="max-h-[600px] overflow-y-auto">
+                                        {categorias.map(cat => (
+                                            <div key={cat} className="mb-4">
+                                                <h4 className="font-semibold text-sm text-gray-600 mb-2">{cat}</h4>
+                                                {campos.filter(c => c.categoria === cat).map(campo => (
+                                                    <div key={campo.id} className="bg-gray-50 p-2 rounded mb-2 flex justify-between items-center">
+                                                        <div className="flex-1">
+                                                            <button
+                                                                onClick={() => inserirCampo(campo.nome)}
+                                                                className="text-left w-full hover:text-blue-600"
+                                                            >
+                                                                <span className="font-mono text-sm text-blue-600">{campo.nome}</span>
+                                                                <p className="text-xs text-gray-600">{campo.descricao}</p>
+                                                            </button>
+                                                        </div>
+                                                        {campo.categoria === 'Personalizado' && (
+                                                            <button
+                                                                onClick={() => removerCampo(campo.id)}
+                                                                className="ml-2 text-red-500 hover:text-red-700"
+                                                            >
+                                                                ❌
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         ))}
                                     </div>
-                                    {errors.tipoConexao && <p className="text-red-500 text-sm mt-1">{errors.tipoConexao}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Consumo Mensal (kW) *</label>
-                                    <input type="number" name="consumoKW" value={formData.consumoKW} onChange={handleInputChange} placeholder="Ex: 250" className={`w-full p-3 border rounded-lg ${errors.consumoKW ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.consumoKW && <p className="text-red-500 text-sm mt-1">{errors.consumoKW}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Número da Instalação *</label>
-                                    <input type="text" name="numeroInstalacao" value={formData.numeroInstalacao} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroInstalacao ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {errors.numeroInstalacao && <p className="text-red-500 text-sm mt-1">{errors.numeroInstalacao}</p>}
                                 </div>
                             </div>
-                        )}
 
-                        {step === 4 && simulacao && (
-                            <div className="space-y-6">
-                                <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center">
-                                    <h3 className="text-xl font-semibold mb-3">Sua Economia Mensal com Energia</h3>
-                                    <p className="text-6xl font-bold mb-3">R$ {formatBRL(simulacao.economiaMensal)}</p>
-                                    <p className="text-lg">Desconto de até {simulacao.desconto}% *</p>
-                                </div>
+                            {/* Editor de Template */}
+                            <div className="lg:col-span-2">
+                                <div className="bg-white rounded-xl shadow-lg p-6">
+                                    <h2 className="text-xl font-bold mb-4">📝 Editor de Template</h2>
+                                    
+                                    <textarea
+                                        id="editor-template"
+                                        value={template}
+                                        onChange={(e) => setTemplate(e.target.value)}
+                                        className="w-full h-[600px] p-4 border rounded-lg font-mono text-sm"
+                                        placeholder="Digite o template aqui. Clique nos campos ao lado para inserir variáveis."
+                                    />
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4 p-4 border-2 border-red-500 rounded-lg">
-                                            <div>
-                                                <h4 className="text-center font-bold text-blue-800 mb-3">Conta Atual</h4>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span>Consumo Mínimo</span>
-                                                        <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Impostos Não Compensáveis</span>
-                                                        <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Energia Cativa</span>
-                                                        <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                                    </div>
-                                                    <div className="border-t pt-1 flex justify-between font-bold">
-                                                        <span>Total</span>
-                                                        <span>R$ {formatBRL(simulacao.contaAtual)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-center font-bold text-green-800 mb-3">Com a GD Kratos</h4>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span>Consumo Mínimo</span>
-                                                        <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Impostos Não Compensáveis</span>
-                                                        <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Energia Cativa</span>
-                                                        <span>R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
-                                                    </div>
-                                                    <div className="border-t pt-1 flex justify-between font-bold text-green-700">
-                                                        <span>Total</span>
-                                                        <span>R$ {formatBRL(simulacao.contaNova)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
-                                            <h4 className="font-semibold text-blue-800 mb-3">Seu desconto conosco:</h4>
-                                            <div className="space-y-1 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span>Consumo Mínimo</span>
-                                                    <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Impostos Não Compensáveis</span>
-                                                    <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Energia Cativa</span>
-                                                    <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                                </div>
-                                                <div className="border-t my-1"></div>
-                                                <div className="flex justify-between font-semibold">
-                                                    <span></span>
-                                                    <span>R$ {formatBRL(simulacao.contaAtual)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-green-600 font-bold">
-                                                    <span>Desconto GD Kratos na Energia (-{simulacao.desconto}%)</span>
-                                                    <span>(R$ {formatBRL(simulacao.economiaMensal)})</span>
-                                                </div>
-                                                <div className="border-t-2 pt-1 flex justify-between font-bold text-green-700">
-                                                    <span></span>
-                                                    <span>R$ {formatBRL(simulacao.contaNova)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div className="flex gap-4 mt-4">
+                                        <button
+                                            onClick={salvarTemplate}
+                                            disabled={salvando}
+                                            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+                                        >
+                                            {salvando ? '💾 Salvando...' : '💾 Salvar Template'}
+                                        </button>
+                                        <button
+                                            onClick={gerarPrevia}
+                                            className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700"
+                                        >
+                                            👁️ Gerar Prévia DOCX
+                                        </button>
                                     </div>
 
-                                    <div className="bg-white border-2 border-green-500 p-6 rounded-lg">
-                                        <h4 className="text-xl font-bold text-green-700 mb-4 text-center">💰 Resumo da Economia</h4>
-                                        <div className="space-y-4">
-                                            <div className="bg-green-50 p-4 rounded-lg">
-                                                <p className="text-sm text-gray-600 mb-1">Economia Mensal</p>
-                                                <p className="text-3xl font-bold text-green-700">R$ {formatBRL(simulacao.economiaMensal)}</p>
-                                            </div>
-                                            <div className="bg-blue-50 p-4 rounded-lg">
-                                                <p className="text-sm text-gray-600 mb-1">Economia Anual</p>
-                                                <p className="text-3xl font-bold text-blue-700">R$ {formatBRL(simulacao.economiaAnual)}</p>
-                                            </div>
-                                            <div className="bg-purple-50 p-4 rounded-lg">
-                                                <p className="text-sm text-gray-600 mb-1">Equivalente a pagar por ano</p>
-                                                <p className="text-3xl font-bold text-purple-700">{simulacao.contasPorAno} contas</p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 text-xs text-gray-600 bg-yellow-50 p-3 rounded">
-                                            * Os valores são estimativas baseadas nas informações fornecidas
-                                        </div>
+                                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                                        <p className="text-sm text-gray-700">
+                                            <strong>💡 Dica:</strong> Clique nos campos ao lado para inseri-los no template. 
+                                            Os campos serão substituídos automaticamente pelos dados reais ao gerar o contrato.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {step === 5 && (
-                            <div className="space-y-6">
-                                <div className="bg-purple-50 p-4 rounded-lg mb-4">
-                                    <p className="text-sm text-purple-800">📋 Documentação e Aceite</p>
-                                </div>
-                                <div className="flex gap-4 justify-center mb-6">
-                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'fisica' }))} className={`px-6 py-3 rounded-lg border-2 ${formData.tipoPessoa === 'fisica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
-                                        Pessoa Física
-                                    </button>
-                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, tipoPessoa: 'juridica' }))} className={`px-6 py-3 rounded-lg border-2 ${formData.tipoPessoa === 'juridica' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
-                                        Pessoa Jurídica
-                                    </button>
-                                </div>
-
-                                {formData.tipoPessoa === 'fisica' ? (
-                                    <>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">CPF *</label>
-                                            <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpf ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {errors.cpf && <p className="text-red-500 text-sm mt-1">{errors.cpf}</p>}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">RG *</label>
-                                            <input type="text" name="rg" value={formData.rg} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rg ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {errors.rg && <p className="text-red-500 text-sm mt-1">{errors.rg}</p>}
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">RG/CNH Frente *</label>
-                                                <input type="file" name="arquivoRGFrente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGFrente ? 'border-red-500' : 'border-gray-300'}`} />
-                                                {formData.arquivoRGFrente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGFrente.name}</p>}
-                                                {errors.arquivoRGFrente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGFrente}</p>}
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">RG/CNH Verso *</label>
-                                                <input type="file" name="arquivoRGVerso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGVerso ? 'border-red-500' : 'border-gray-300'}`} />
-                                                {formData.arquivoRGVerso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGVerso.name}</p>}
-                                                {errors.arquivoRGVerso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGVerso}</p>}
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">CNPJ *</label>
-                                            <input type="text" name="cnpj" value={formData.cnpj} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cnpj ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {errors.cnpj && <p className="text-red-500 text-sm mt-1">{errors.cnpj}</p>}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Nome Fantasia *</label>
-                                            <input type="text" name="nomeFantasia" value={formData.nomeFantasia} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nomeFantasia ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {errors.nomeFantasia && <p className="text-red-500 text-sm mt-1">{errors.nomeFantasia}</p>}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Razão Social *</label>
-                                            <input type="text" name="razaoSocial" value={formData.razaoSocial} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.razaoSocial ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {errors.razaoSocial && <p className="text-red-500 text-sm mt-1">{errors.razaoSocial}</p>}
-                                        </div>
-                                        <div className="border-t pt-4">
-                                            <h3 className="font-bold mb-4">Representante Legal 1 *</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">Nome Completo *</label>
-                                                    <input type="text" name="representanteLegal1" value={formData.representanteLegal1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.representanteLegal1 ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {errors.representanteLegal1 && <p className="text-red-500 text-sm mt-1">{errors.representanteLegal1}</p>}
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium mb-2">CPF *</label>
-                                                        <input type="text" name="cpfRepresentante1" value={formData.cpfRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpfRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
-                                                        {errors.cpfRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.cpfRepresentante1}</p>}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium mb-2">RG *</label>
-                                                        <input type="text" name="rgRepresentante1" value={formData.rgRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
-                                                        {errors.rgRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.rgRepresentante1}</p>}
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium mb-2">RG Frente *</label>
-                                                        <input type="file" name="arquivoRGRep1Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Frente ? 'border-red-500' : 'border-gray-300'}`} />
-                                                        {formData.arquivoRGRep1Frente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Frente.name}</p>}
-                                                        {errors.arquivoRGRep1Frente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Frente}</p>}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium mb-2">RG Verso *</label>
-                                                        <input type="file" name="arquivoRGRep1Verso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Verso ? 'border-red-500' : 'border-gray-300'}`} />
-                                                        {formData.arquivoRGRep1Verso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRep1Verso.name}</p>}
-                                                        {errors.arquivoRGRep1Verso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRep1Verso}</p>}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Contrato Social *</label>
-                                            <input type="file" name="contratoSocial" onChange={handleFileChange} accept=".pdf" className={`w-full p-3 border rounded-lg ${errors.contratoSocial ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {formData.contratoSocial && <p className="text-green-600 text-sm mt-1">✓ {formData.contratoSocial.name}</p>}
-                                            {errors.contratoSocial && <p className="text-red-500 text-sm mt-1">{errors.contratoSocial}</p>}
-                                        </div>
-                                    </>
-                                )}
-
-                                <div className="border-t pt-6">
-                                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-400 mb-4">
-                                        <label className="flex items-center cursor-pointer">
-                                            <input type="checkbox" name="temResponsavelPagamento" checked={formData.temResponsavelPagamento} onChange={handleInputChange} className="mr-3 w-5 h-5" />
-                                            <span className="text-sm font-medium">Adicionar Responsável pelo Pagamento</span>
-                                        </label>
-                                    </div>
-
-                                    {formData.temResponsavelPagamento && (
-                                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                                            <h3 className="font-bold mb-4">Responsável pelo Pagamento</h3>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Nome *</label>
-                                                <input type="text" name="nomeResponsavelPagamento" value={formData.nomeResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nomeResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
-                                                {errors.nomeResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.nomeResponsavelPagamento}</p>}
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">CPF *</label>
-                                                    <input type="text" name="cpfResponsavelPagamento" value={formData.cpfResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpfResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {errors.cpfResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.cpfResponsavelPagamento}</p>}
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG *</label>
-                                                    <input type="text" name="rgResponsavelPagamento" value={formData.rgResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {errors.rgResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.rgResponsavelPagamento}</p>}
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG Frente *</label>
-                                                    <input type="file" name="arquivoRGRespPagFrente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRespPagFrente ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {formData.arquivoRGRespPagFrente && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRespPagFrente.name}</p>}
-                                                    {errors.arquivoRGRespPagFrente && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRespPagFrente}</p>}
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">RG Verso *</label>
-                                                    <input type="file" name="arquivoRGRespPagVerso" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRespPagVerso ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {formData.arquivoRGRespPagVerso && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoRGRespPagVerso.name}</p>}
-                                                    {errors.arquivoRGRespPagVerso && <p className="text-red-500 text-sm mt-1">{errors.arquivoRGRespPagVerso}</p>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Conta de Energia *</label>
-                                    <input type="file" name="arquivoConta" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoConta ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {formData.arquivoConta && <p className="text-green-600 text-sm mt-1">✓ {formData.arquivoConta.name}</p>}
-                                    {errors.arquivoConta && <p className="text-red-500 text-sm mt-1">{errors.arquivoConta}</p>}
-                                </div>
-
-                                <div className="border-t pt-6 space-y-3">
-                                    <div className="bg-blue-50 p-4 rounded-lg">
-                                        <label className="flex items-start cursor-pointer">
-                                            <input type="checkbox" name="aceiteTermoAdesao" checked={formData.aceiteTermoAdesao} onChange={handleInputChange} className="mr-3 mt-1 w-5 h-5" />
-                                            <span className="text-sm">Estou ciente que serei responsável pela assinatura do termo de adesão *</span>
-                                        </label>
-                                        {errors.aceiteTermoAdesao && <p className="text-red-500 text-sm mt-1">{errors.aceiteTermoAdesao}</p>}
-                                    </div>
-                                    <div className="bg-blue-50 p-4 rounded-lg">
-                                        <label className="flex items-start cursor-pointer">
-                                            <input type="checkbox" name="aceiteDadosPessoais" checked={formData.aceiteDadosPessoais} onChange={handleInputChange} className="mr-3 mt-1 w-5 h-5" />
-                                            <span className="text-sm">Autorizo o Tratamento de Dados Pessoais (LGPD) *</span>
-                                        </label>
-                                        {errors.aceiteDadosPessoais && <p className="text-red-500 text-sm mt-1">{errors.aceiteDadosPessoais}</p>}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex justify-between mt-8 pt-6 border-t">
-                            {step > 1 && (
-                                <button onClick={() => setStep(step - 1)} disabled={loading} className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50">
-                                    Voltar
-                                </button>
-                            )}
-                            <div className="flex-1"></div>
-                            {step < 5 ? (
-                                <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                                    Prosseguir
-                                </button>
-                            ) : (
-                                <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
-                                    {loading ? '⏳ Enviando arquivos e dados...' : 'Enviar Proposta'}
-                                </button>
-                            )}
                         </div>
                     </div>
                 </div>
             );
         }
 
-        ReactDOM.render(<EnergyContractForm />, document.getElementById('root'));
+        ReactDOM.render(<GestorTemplates />, document.getElementById('root'));
     </script>
 </body>
 </html>
