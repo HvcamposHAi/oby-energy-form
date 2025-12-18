@@ -53,6 +53,7 @@
                 arquivoRGFrente: null, arquivoRGVerso: null,
                 cnpj: '', nomeFantasia: '', razaoSocial: '',
                 representanteLegal1: '', cpfRepresentante1: '', rgRepresentante1: '', 
+                emailRepresentante1: '',
                 arquivoRGRep1Frente: null, arquivoRGRep1Verso: null,
                 contratoSocial: null,
                 temResponsavelPagamento: false,
@@ -232,6 +233,7 @@
                         if (!formData.representanteLegal1) newErrors.representanteLegal1 = 'Campo obrigatório';
                         if (!formData.cpfRepresentante1) newErrors.cpfRepresentante1 = 'Campo obrigatório';
                         if (!formData.rgRepresentante1) newErrors.rgRepresentante1 = 'Campo obrigatório';
+                        if (!formData.emailRepresentante1) newErrors.emailRepresentante1 = 'Campo obrigatório';
                         if (!formData.arquivoRGRep1Frente) newErrors.arquivoRGRep1Frente = 'Campo obrigatório';
                         if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'Campo obrigatório';
                         if (!formData.contratoSocial) newErrors.contratoSocial = 'Campo obrigatório';
@@ -281,7 +283,6 @@
                 const minimo = consumoMinimo[formData.tipoConexao];
                 const desconto = descontoPercentual / 100;
                 
-                // ✅ CORRIGIDO: Calcular dinamicamente baseado no tipo de conexão
                 const consumoMinimoValor = minimo * tarifaTotal;
                 
                 const consumoExcedente = consumo - minimo;
@@ -434,6 +435,7 @@
                         representante_legal_1: formData.representanteLegal1,
                         cpf_representante_1: formData.cpfRepresentante1,
                         rg_representante_1: formData.rgRepresentante1,
+                        email_representante_1: formData.emailRepresentante1,
                         rg_rep1_frente_url: rgRep1FrenteUrl,
                         rg_rep1_verso_url: rgRep1VersoUrl,
                         contrato_social_url: contratoSocialUrl,
@@ -1074,6 +1076,11 @@
                                                         <input type="text" name="rgRepresentante1" value={formData.rgRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
                                                         {errors.rgRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.rgRepresentante1}</p>}
                                                     </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">E-mail *</label>
+                                                    <input type="email" name="emailRepresentante1" value={formData.emailRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.emailRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    {errors.emailRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.emailRepresentante1}</p>}
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
