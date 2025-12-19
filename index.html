@@ -223,7 +223,7 @@
                 if (step === 5) {
                     if (formData.tipoPessoa === 'fisica') {
                         if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
-                        if (!formData.rg) newErrors.rg = 'Campo obrigatório';
+                        // RG não é mais obrigatório
                         if (!formData.arquivoRGFrente) newErrors.arquivoRGFrente = 'Campo obrigatório';
                         if (!formData.arquivoRGVerso) newErrors.arquivoRGVerso = 'Campo obrigatório';
                     } else {
@@ -232,7 +232,7 @@
                         if (!formData.razaoSocial) newErrors.razaoSocial = 'Campo obrigatório';
                         if (!formData.representanteLegal1) newErrors.representanteLegal1 = 'Campo obrigatório';
                         if (!formData.cpfRepresentante1) newErrors.cpfRepresentante1 = 'Campo obrigatório';
-                        if (!formData.rgRepresentante1) newErrors.rgRepresentante1 = 'Campo obrigatório';
+                        // RG Representante não é mais obrigatório
                         if (!formData.emailRepresentante1) newErrors.emailRepresentante1 = 'Campo obrigatório';
                         if (!formData.arquivoRGRep1Frente) newErrors.arquivoRGRep1Frente = 'Campo obrigatório';
                         if (!formData.arquivoRGRep1Verso) newErrors.arquivoRGRep1Verso = 'Campo obrigatório';
@@ -242,7 +242,7 @@
                     if (formData.temResponsavelPagamento) {
                         if (!formData.nomeResponsavelPagamento) newErrors.nomeResponsavelPagamento = 'Campo obrigatório';
                         if (!formData.cpfResponsavelPagamento) newErrors.cpfResponsavelPagamento = 'Campo obrigatório';
-                        if (!formData.rgResponsavelPagamento) newErrors.rgResponsavelPagamento = 'Campo obrigatório';
+                        // RG Responsável Pagamento não é mais obrigatório
                         if (!formData.arquivoRGRespPagFrente) newErrors.arquivoRGRespPagFrente = 'Campo obrigatório';
                         if (!formData.arquivoRGRespPagVerso) newErrors.arquivoRGRespPagVerso = 'Campo obrigatório';
                     }
@@ -1021,9 +1021,8 @@
                                             {errors.cpf && <p className="text-red-500 text-sm mt-1">{errors.cpf}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-2">RG *</label>
-                                            <input type="text" name="rg" value={formData.rg} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rg ? 'border-red-500' : 'border-gray-300'}`} />
-                                            {errors.rg && <p className="text-red-500 text-sm mt-1">{errors.rg}</p>}
+                                            <label className="block text-sm font-medium mb-2">RG</label>
+                                            <input type="text" name="rg" value={formData.rg} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
@@ -1072,9 +1071,8 @@
                                                         {errors.cpfRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.cpfRepresentante1}</p>}
                                                     </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium mb-2">RG *</label>
-                                                        <input type="text" name="rgRepresentante1" value={formData.rgRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
-                                                        {errors.rgRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.rgRepresentante1}</p>}
+                                                        <label className="block text-sm font-medium mb-2">RG</label>
+                                                        <input type="text" name="rgRepresentante1" value={formData.rgRepresentante1} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
                                                     </div>
                                                 </div>
                                                 <div>
@@ -1130,9 +1128,8 @@
                                                     {errors.cpfResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.cpfResponsavelPagamento}</p>}
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2">RG *</label>
-                                                    <input type="text" name="rgResponsavelPagamento" value={formData.rgResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.rgResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    {errors.rgResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.rgResponsavelPagamento}</p>}
+                                                    <label className="block text-sm font-medium mb-2">RG</label>
+                                                    <input type="text" name="rgResponsavelPagamento" value={formData.rgResponsavelPagamento} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
