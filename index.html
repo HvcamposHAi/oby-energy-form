@@ -753,7 +753,7 @@
                                             <option value="">Selecione um vendedor...</option>
                                             {vendedores.map((v) => (
                                                 <option key={v.id} value={v.id}>
-                                                    {v.codigo_vendedor ? `${v.codigo_vendedor} - ${v.nome_completo}` : v.nome_completo}
+                                                    {v.codigo_vendedor || v.nome_completo}
                                                 </option>
                                             ))}
                                         </select>
