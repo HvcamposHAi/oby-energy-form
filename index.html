@@ -41,7 +41,7 @@
             const [mostrarRevisao, setMostrarRevisao] = useState(false);
             const [propostaId, setPropostaId] = useState(null);
             const [formData, setFormData] = useState({
-                vendedor: '',
+                vendedor: '1e812442-e54c-4503-8941-e6f5ba9de06b', // UUID do vendedor padrão 20.090100
                 cep: '', nome: '', sobrenome: '', cupom: '', 
                 email: '', telefone: '',
                 logradouro: '', numeroEndereco: '', complemento: '', bairro: '',
@@ -192,7 +192,7 @@
                 const newErrors = {};
                 
                 if (step === 1) {
-                    if (!formData.vendedor) newErrors.vendedor = 'Campo obrigatório';
+                    if (!formData.vendedor) newErrors.vendedor = 'Selecione um vendedor';
                     if (!formData.cep) newErrors.cep = 'Campo obrigatório';
                     if (!formData.nome) newErrors.nome = 'Campo obrigatório';
                     if (!formData.sobrenome) newErrors.sobrenome = 'Campo obrigatório';
@@ -752,13 +752,16 @@
                                         >
                                             <option value="">Selecione um vendedor...</option>
                                             {vendedores.map((v) => (
-                                                <option key={v.id} value={v.id}>
-                                                    {v.codigo_vendedor || v.nome_completo}
+                                                <option key={v.id} value={v.id} selected={v.codigo_vendedor === '20.090100'}>
+                                                    {v.nome_completo} ({v.codigo_vendedor})
                                                 </option>
                                             ))}
                                         </select>
                                     )}
                                     {errors.vendedor && <p className="text-red-500 text-sm mt-1">{errors.vendedor}</p>}
+                                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                        ✅ Vendedor padrão: Venda Direta GD Kratos (20.090100)
+                                    </p>
                                 </div>
 
                                 <div>
