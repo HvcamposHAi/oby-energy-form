@@ -753,7 +753,7 @@
                                             <option value="">Selecione um vendedor...</option>
                                             {vendedores.map((v) => (
                                                 <option key={v.id} value={v.id} selected={v.codigo_vendedor === '20.090100'}>
-                                                    {v.codigo_vendedor}
+                                                    {v.codigo_vendedor === '20.090100' ? 'Nenhum' : v.codigo_vendedor}
                                                 </option>
                                             ))}
                                         </select>
