@@ -753,15 +753,12 @@
                                             <option value="">Selecione um vendedor...</option>
                                             {vendedores.map((v) => (
                                                 <option key={v.id} value={v.id} selected={v.codigo_vendedor === '20.090100'}>
-                                                    {v.nome_completo} ({v.codigo_vendedor})
+                                                    {v.codigo_vendedor}
                                                 </option>
                                             ))}
                                         </select>
                                     )}
                                     {errors.vendedor && <p className="text-red-500 text-sm mt-1">{errors.vendedor}</p>}
-                                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                        ✅ Vendedor padrão: Venda Direta GD Kratos (20.090100)
-                                    </p>
                                 </div>
 
                                 <div>
