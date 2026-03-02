@@ -754,8 +754,12 @@
                                             className={`w-full p-3 border rounded-lg ${errors.vendedor ? 'border-red-500' : 'border-gray-300'}`}
                                         >
                                             <option value="">Selecione um vendedor...</option>
-                                            {vendedores.map((v) => (
-                                                <option key={v.id} value={v.id} selected={v.codigo_vendedor === '20.090100'}>
+                                            {[...vendedores].sort((a, b) => {
+                                                if (a.codigo_vendedor === '20.090100') return -1;
+                                                if (b.codigo_vendedor === '20.090100') return 1;
+                                                return 0;
+                                            }).map((v) => (
+                                                <option key={v.id} value={v.id}>
                                                     {v.codigo_vendedor === '20.090100' ? 'Nenhum' : v.codigo_vendedor}
                                                 </option>
                                             ))}
