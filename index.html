@@ -193,7 +193,7 @@
                 const newErrors = {};
                 
                 if (step === 1) {
-                    if (!formData.vendedor) newErrors.vendedor = 'Selecione um vendedor';
+                    if (!formData.vendedor) newErrors.vendedor = 'Selecione um código de indicação';
                     if (!formData.cep) newErrors.cep = 'Campo obrigatório';
                     if (!formData.nome) newErrors.nome = 'Campo obrigatório';
                     if (!formData.sobrenome) newErrors.sobrenome = 'Campo obrigatório';
@@ -499,16 +499,16 @@
                 const documento = formData.tipoPessoa === 'fisica' ? formData.cpf : formData.cnpj;
                 
                 return (
-                    <div className="min-h-screen bg-white p-8">
+                    <div className="min-h-screen bg-white p-4 sm:p-8">
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-8 no-print">
                                 <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="GD Kratos" className="h-24 w-auto mx-auto mb-4" />
-                                <h1 className="text-3xl font-bold text-green-600">✅ Proposta Enviada!</h1>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-green-600">✅ Proposta Enviada!</h1>
                                 <p className="text-gray-600 mt-2">Sua proposta foi registrada com sucesso em nosso sistema</p>
                             </div>
 
-                            <div className="bg-gradient-to-r from-green-100 to-blue-100 p-6 rounded-xl mb-6">
-                                <div className="grid grid-cols-3 gap-6 text-center">
+                            <div className="bg-gradient-to-r from-green-100 to-blue-100 p-4 sm:p-6 rounded-xl mb-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
                                     <div>
                                         <p className="text-sm text-gray-600 mb-2">Economia Mensal</p>
                                         <p className="text-3xl font-bold text-green-600">R$ {formatBRL(simulacao.economiaMensal)}</p>
@@ -524,11 +524,11 @@
                                 </div>
                             </div>
 
-                            <div className="border rounded-lg p-6 mb-6">
+                            <div className="border rounded-lg p-4 sm:p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">📋</span> Dados do Cliente
                                 </h2>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-gray-600">Nome Completo</p>
                                         <p className="font-semibold">{nomeCompleto}</p>
@@ -557,11 +557,11 @@
                                 </div>
                             </div>
 
-                            <div className="border rounded-lg p-6 mb-6">
+                            <div className="border rounded-lg p-4 sm:p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">⚡</span> Dados da Instalação
                                 </h2>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-gray-600">Distribuidora</p>
                                         <p className="font-semibold">{formData.distribuidoraEnergia}</p>
@@ -581,14 +581,14 @@
                                 </div>
                             </div>
 
-                            <div className="border rounded-lg p-6 mb-6">
+                            <div className="border rounded-lg p-4 sm:p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">🧮</span> Memória de Cálculo Detalhada
                                 </h2>
                                 
                                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                                     <h3 className="font-semibold mb-3">📊 Base do Cálculo</h3>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Consumo Médio:</span>
                                             <span className="font-semibold">{simulacao.consumo} kWh</span>
@@ -608,7 +608,7 @@
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                     <div className="border-2 border-red-200 rounded-lg p-4">
                                         <h3 className="font-semibold text-center mb-3 text-red-700">Conta Atual</h3>
                                         <div className="space-y-2 text-sm">
@@ -680,7 +680,7 @@
                                 </div>
                             </div>
 
-                            <div className="border rounded-lg p-6 mb-6">
+                            <div className="border rounded-lg p-4 sm:p-6 mb-6">
                                 <h2 className="text-xl font-bold mb-4 flex items-center">
                                     <span className="mr-2">📌</span> Próximos Passos
                                 </h2>
@@ -716,10 +716,10 @@
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-4">
-                    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+                    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8">
                         <div className="text-center mb-8">
                             <img src="https://uuaqmwnfjopgjmjjchmw.supabase.co/storage/v1/object/public/logos/Logo%20Oby%20-%20Baixa%20Qualidade.png" alt="GD Kratos" className="h-20 w-auto mx-auto mb-4" />
-                            <h1 className="text-3xl font-bold text-gray-800">Proposta de Contratação</h1>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Proposta de Contratação</h1>
                             <p className="text-gray-600 mt-2">Preencha os dados para simular sua economia</p>
                         </div>
 
@@ -741,7 +741,7 @@
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Vendedor *</label>
+                                    <label className="block text-sm font-medium mb-2">Insira o seu Código de Indicação (se houver)</label>
                                     {loadingVendedores ? (
                                         <div className="w-full p-3 border rounded-lg border-gray-300 bg-gray-50 text-gray-500">
                                             Carregando vendedores...
@@ -753,7 +753,7 @@
                                             onChange={handleInputChange} 
                                             className={`w-full p-3 border rounded-lg ${errors.vendedor ? 'border-red-500' : 'border-gray-300'}`}
                                         >
-                                            <option value="">Selecione um vendedor...</option>
+                                            <option value="">Selecione um código de indicação...</option>
                                             {[...vendedores].sort((a, b) => {
                                                 if (a.codigo_vendedor === '20.090100') return -1;
                                                 if (b.codigo_vendedor === '20.090100') return 1;
@@ -781,7 +781,7 @@
                                         </p>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Nome *</label>
                                         <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nome ? 'border-red-500' : 'border-gray-300'}`} />
@@ -821,7 +821,7 @@
                                     <input type="text" name="logradouro" value={formData.logradouro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.logradouro ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.logradouro && <p className="text-red-500 text-sm mt-1">{errors.logradouro}</p>}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Número *</label>
                                         <input type="text" name="numeroEndereco" value={formData.numeroEndereco} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.numeroEndereco ? 'border-red-500' : 'border-gray-300'}`} />
@@ -837,7 +837,7 @@
                                     <input type="text" name="bairro" value={formData.bairro} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.bairro ? 'border-red-500' : 'border-gray-300'}`} />
                                     {errors.bairro && <p className="text-red-500 text-sm mt-1">{errors.bairro}</p>}
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Cidade</label>
                                         <input type="text" name="cidade" value={formData.cidade} readOnly className="w-full p-3 border rounded-lg border-gray-300 bg-gray-100" />
@@ -872,7 +872,7 @@
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Tipo de Conexão *</label>
-                                    <div className="grid grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         {['trifasico', 'bifasico', 'monofasico'].map((tipo) => (
                                             <button key={tipo} type="button" onClick={() => setFormData(prev => ({ ...prev, tipoConexao: tipo }))} className={`p-4 rounded-lg border-2 ${formData.tipoConexao === tipo ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
                                                 {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
@@ -897,88 +897,60 @@
 
                         {step === 4 && simulacao && (
                             <div className="space-y-6">
-                                <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-8 rounded-xl text-center">
-                                    <h3 className="text-xl font-semibold mb-3">Sua Economia Mensal com Energia</h3>
-                                    <p className="text-6xl font-bold mb-3">R$ {formatBRL(simulacao.economiaMensal)}</p>
+                                <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-4 sm:p-8 rounded-xl text-center">
+                                    <h3 className="text-base sm:text-xl font-semibold mb-3">Sua Economia Mensal com Energia</h3>
+                                    <p className="text-4xl sm:text-6xl font-bold mb-3 break-words">R$ {formatBRL(simulacao.economiaMensal)}</p>
                                     <p className="text-lg">Desconto de até {simulacao.desconto}% *</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4 p-4 border-2 border-red-500 rounded-lg">
-                                            <div>
-                                                <h4 className="text-center font-bold text-blue-800 mb-3">Conta Atual</h4>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span>Consumo Mínimo</span>
-                                                        <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Impostos Não Compensáveis</span>
-                                                        <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Energia Cativa</span>
-                                                        <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                                    </div>
-                                                    <div className="border-t pt-1 flex justify-between font-bold">
-                                                        <span>Total</span>
-                                                        <span>R$ {formatBRL(simulacao.contaAtual)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-center font-bold text-green-800 mb-3">Com a GD Kratos</h4>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span>Consumo Mínimo</span>
-                                                        <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Impostos Não Compensáveis</span>
-                                                        <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Energia Cativa</span>
-                                                        <span>R$ {formatBRL(simulacao.energiaCativaComDesconto)}</span>
-                                                    </div>
-                                                    <div className="border-t pt-1 flex justify-between font-bold text-green-700">
-                                                        <span>Total</span>
-                                                        <span>R$ {formatBRL(simulacao.contaNova)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div className="p-4 border-2 border-red-500 rounded-lg">
+                                            <table className="w-full text-xs sm:text-sm" style={{ borderCollapse: 'collapse' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th className="text-left py-1"></th>
+                                                        <th className="text-right py-1 font-bold text-blue-800 pl-4">Conta Atual</th>
+                                                        <th className="text-right py-1 font-bold text-green-800 pl-4">Com a GD Kratos</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td className="py-1">Consumo Mínimo</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap py-1 pl-4">R$ {formatBRL(simulacao.consumoMinimoValor)}</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap py-1 pl-4">R$ {formatBRL(simulacao.consumoMinimoValor)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="py-1">Impostos Não Compensáveis</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap py-1 pl-4">R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap py-1 pl-4">R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="py-1">Energia Cativa</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap py-1 pl-4">R$ {formatBRL(simulacao.energiaCativaAtual)}</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap py-1 pl-4">R$ {formatBRL(simulacao.energiaCativaComDesconto)}</td>
+                                                    </tr>
+                                                    <tr className="border-t-2">
+                                                        <td className="pt-2 font-bold">Total</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap pt-2 pl-4 font-bold">R$ {formatBRL(simulacao.contaAtual)}</td>
+                                                        <td className="text-right tabular-nums whitespace-nowrap pt-2 pl-4 font-bold text-green-700">R$ {formatBRL(simulacao.contaNova)}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
 
                                         <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
                                             <h4 className="font-semibold text-blue-800 mb-3">Seu desconto conosco:</h4>
-                                            <div className="space-y-1 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span>Consumo Mínimo</span>
-                                                    <span>R$ {formatBRL(simulacao.consumoMinimoValor)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Impostos Não Compensáveis</span>
-                                                    <span>R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span>Energia Cativa</span>
-                                                    <span>R$ {formatBRL(simulacao.energiaCativaAtual)}</span>
-                                                </div>
-                                                <div className="border-t my-1"></div>
-                                                <div className="flex justify-between font-semibold">
-                                                    <span></span>
-                                                    <span>R$ {formatBRL(simulacao.contaAtual)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-green-600 font-bold">
-                                                    <span>Desconto GD Kratos na Energia (-{simulacao.desconto}%)</span>
-                                                    <span>(R$ {formatBRL(simulacao.economiaMensal)})</span>
-                                                </div>
-                                                <div className="border-t-2 pt-1 flex justify-between font-bold text-green-700">
-                                                    <span></span>
-                                                    <span>R$ {formatBRL(simulacao.contaNova)}</span>
-                                                </div>
-                                            </div>
+                                            <table className="w-full text-xs sm:text-sm" style={{ borderCollapse: 'collapse' }}>
+                                                <tbody>
+                                                    <tr><td className="py-0.5">Consumo Mínimo</td><td className="text-right tabular-nums whitespace-nowrap py-0.5">R$ {formatBRL(simulacao.consumoMinimoValor)}</td></tr>
+                                                    <tr><td className="py-0.5">Impostos Não Compensáveis</td><td className="text-right tabular-nums whitespace-nowrap py-0.5">R$ {formatBRL(simulacao.impostosNaoCompensaveis)}</td></tr>
+                                                    <tr><td className="py-0.5">Energia Cativa</td><td className="text-right tabular-nums whitespace-nowrap py-0.5">R$ {formatBRL(simulacao.energiaCativaAtual)}</td></tr>
+                                                    <tr className="border-t"><td></td><td className="text-right tabular-nums whitespace-nowrap font-semibold pt-1">R$ {formatBRL(simulacao.contaAtual)}</td></tr>
+                                                    <tr className="text-green-600 font-bold"><td className="py-0.5">Desconto GD Kratos na Energia (-{simulacao.desconto}%)</td><td className="text-right tabular-nums whitespace-nowrap py-0.5">(R$ {formatBRL(simulacao.economiaMensal)})</td></tr>
+                                                    <tr className="border-t-2 font-bold text-green-700"><td className="pt-1"></td><td className="text-right tabular-nums whitespace-nowrap pt-1">R$ {formatBRL(simulacao.contaNova)}</td></tr>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
 
@@ -1031,7 +1003,7 @@
                                             <label className="block text-sm font-medium mb-2">RG</label>
                                             <input type="text" name="rg" value={formData.rg} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">RG/CNH Frente *</label>
                                                 <input type="file" name="arquivoRGFrente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGFrente ? 'border-red-500' : 'border-gray-300'}`} />
@@ -1071,7 +1043,7 @@
                                                     <input type="text" name="representanteLegal1" value={formData.representanteLegal1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.representanteLegal1 ? 'border-red-500' : 'border-gray-300'}`} />
                                                     {errors.representanteLegal1 && <p className="text-red-500 text-sm mt-1">{errors.representanteLegal1}</p>}
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div>
                                                         <label className="block text-sm font-medium mb-2">CPF *</label>
                                                         <input type="text" name="cpfRepresentante1" value={formData.cpfRepresentante1} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpfRepresentante1 ? 'border-red-500' : 'border-gray-300'}`} />
@@ -1093,7 +1065,7 @@
                                                     {errors.whatsappRepresentante1 && <p className="text-red-500 text-sm mt-1">{errors.whatsappRepresentante1}</p>}
                                                     <p className="text-xs text-gray-500 mt-1">📱 Link de assinatura D4Sign será enviado para este número</p>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div>
                                                         <label className="block text-sm font-medium mb-2">RG Frente *</label>
                                                         <input type="file" name="arquivoRGRep1Frente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRep1Frente ? 'border-red-500' : 'border-gray-300'}`} />
@@ -1134,7 +1106,7 @@
                                                 <input type="text" name="nomeResponsavelPagamento" value={formData.nomeResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.nomeResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
                                                 {errors.nomeResponsavelPagamento && <p className="text-red-500 text-sm mt-1">{errors.nomeResponsavelPagamento}</p>}
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium mb-2">CPF *</label>
                                                     <input type="text" name="cpfResponsavelPagamento" value={formData.cpfResponsavelPagamento} onChange={handleInputChange} className={`w-full p-3 border rounded-lg ${errors.cpfResponsavelPagamento ? 'border-red-500' : 'border-gray-300'}`} />
@@ -1145,7 +1117,7 @@
                                                     <input type="text" name="rgResponsavelPagamento" value={formData.rgResponsavelPagamento} onChange={handleInputChange} className="w-full p-3 border rounded-lg border-gray-300" />
                                                 </div>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium mb-2">RG Frente *</label>
                                                     <input type="file" name="arquivoRGRespPagFrente" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" className={`w-full p-3 border rounded-lg ${errors.arquivoRGRespPagFrente ? 'border-red-500' : 'border-gray-300'}`} />
